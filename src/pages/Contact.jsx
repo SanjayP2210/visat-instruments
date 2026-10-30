@@ -167,14 +167,14 @@ export default function Contact() {
     {
       icon: <Phone className="h-5 w-5" aria-hidden="true" />,
       title: 'Call us',
-      body: business.phone.display,
+      body: `${business.phone.display} · ${business.contactPerson}`,
       href: `tel:${business.phone.tel}`,
       action: 'Tap to call',
     },
     {
       icon: <WhatsAppIcon className="h-5 w-5" />,
       title: 'WhatsApp',
-      body: business.phone.display,
+      body: `${business.phone.display} · ${business.contactPerson}`,
       href: business.whatsapp.url,
       action: 'Start a chat',
       external: true,

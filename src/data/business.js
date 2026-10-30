@@ -11,13 +11,16 @@ export const business = {
   name: 'VISAT INSTRUMENTS',
   type: 'Weighing Scale Supplier',
   tagline: 'Weighing scales & weighbridge solutions in Ahmedabad',
+  // Primary business contact: Mahesh Solanki. Every site-wide call and
+  // WhatsApp button reads these values.
+  contactPerson: 'Mahesh Solanki',
   phone: {
-    display: '+91 99138 13861',
-    tel: '+919913813861',
+    display: '+91 98799 92228',
+    tel: '+919879992228',
   },
   whatsapp: {
-    number: '919913813861',
-    url: 'https://wa.me/919913813861',
+    number: '919879992228',
+    url: 'https://wa.me/919879992228',
   },
   address: {
     lines: addressLines,
