@@ -1,17 +1,20 @@
-import { ArrowRight, Building2, Layers, MapPin, Phone, Star, UserRound } from 'lucide-react'
+import { ArrowRight, Building2, Layers, MapPin, Phone, Star, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import CtaBand from '../components/common/CtaBand'
 import Icon from '../components/common/Icon'
+import { OwnerCard } from '../components/common/OwnerCard'
 import PageHero from '../components/common/PageHero'
 import Reveal from '../components/common/Reveal'
 import SectionHeading from '../components/common/SectionHeading'
-import WhatsAppIcon from '../components/common/WhatsAppIcon'
 import { business } from '../data/business'
+import { owners } from '../data/owners'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { getCategories } from '../services/catalogService'
 
+const ownerNames = owners.map((o) => o.name).join(' & ')
+
 const highlights = [
-  { icon: UserRound, label: business.owner.role, value: business.owner.name },
+  { icon: Users, label: 'Co-owners', value: ownerNames },
   { icon: Building2, label: 'Business type', value: business.type },
   { icon: MapPin, label: 'Location', value: 'Chandlodiya, Ahmedabad' },
   { icon: Star, label: 'Google rating', value: `${business.rating.value.toFixed(1)} / 5 (${business.rating.count} reviews)` },
@@ -37,9 +40,9 @@ export default function About() {
             <SectionHeading eyebrow="Who we are" title="Weighing solutions, from the scale to the software" />
             <div className="mt-6 space-y-4 text-base leading-relaxed text-steel-600">
               <p>
-                {business.name} is a {business.type.toLowerCase()} based in Chandlodiya, Ahmedabad, Gujarat, owned by{' '}
-                {business.owner.name}. We supply weighing equipment for shops, workshops, industries and sites that need to
-                weigh vehicles.
+                {business.name} is a {business.type.toLowerCase()} based in Chandlodiya, Ahmedabad, Gujarat, co-owned by{' '}
+                {owners.map((o) => o.name).join(' and ')}. We supply weighing equipment for shops, workshops, industries and
+                sites that need to weigh vehicles.
               </p>
               <p>
                 Our range covers table-top electronic weighing scales and digital weighing indicators, along with the
@@ -59,41 +62,6 @@ export default function About() {
                 <Phone className="h-4 w-4" aria-hidden="true" />
                 {business.phone.display}
               </a>
-            </div>
-
-            <div className="mt-10 flex flex-col gap-5 rounded-xl border border-steel-200 bg-navy-50 p-6 sm:flex-row sm:items-center">
-              <span
-                className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-navy-900 font-display text-xl font-bold text-white"
-                aria-hidden="true"
-              >
-                {business.owner.name
-                  .split(' ')
-                  .map((part) => part[0])
-                  .join('')}
-              </span>
-              <div className="flex-1">
-                <p className="text-xs font-bold tracking-widest text-accent-600 uppercase">{business.owner.role}</p>
-                <p className="font-display text-2xl font-bold text-navy-900">{business.owner.name}</p>
-                <p className="text-sm text-steel-600">{business.name}</p>
-              </div>
-              <div className="flex gap-2">
-                <a
-                  href={`tel:${business.phone.tel}`}
-                  className="grid h-11 w-11 place-items-center rounded-md bg-navy-900 text-white hover:bg-navy-700"
-                  aria-label={`Call ${business.owner.name}`}
-                >
-                  <Phone className="h-5 w-5" aria-hidden="true" />
-                </a>
-                <a
-                  href={business.whatsapp.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="grid h-11 w-11 place-items-center rounded-md bg-[#1fa855] text-white hover:bg-[#178a45]"
-                  aria-label={`WhatsApp ${business.owner.name}`}
-                >
-                  <WhatsAppIcon className="h-5 w-5" />
-                </a>
-              </div>
             </div>
           </Reveal>
 
@@ -116,6 +84,27 @@ export default function About() {
               </dl>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      <section id="owners" aria-labelledby="owners-heading" className="section scroll-mt-16 border-t border-steel-200 lg:scroll-mt-[88px]">
+        <div className="container-x">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="eyebrow justify-center">Leadership</p>
+            <h2 id="owners-heading" className="mt-3 text-3xl font-bold sm:text-4xl">
+              Meet Our Owners
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-steel-600">
+              {business.name} is run by its two co-owners, {owners.map((o) => o.name).join(' and ')}.
+            </p>
+          </div>
+          <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2 lg:gap-8">
+            {owners.map((owner, i) => (
+              <Reveal key={owner.id} delay={i * 100}>
+                <OwnerCard owner={owner} />
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -10,10 +10,6 @@ const mapsQuery = encodeURIComponent(`VISAT INSTRUMENTS, ${fullAddress}`)
 export const business = {
   name: 'VISAT INSTRUMENTS',
   type: 'Weighing Scale Supplier',
-  owner: {
-    name: 'Manish Solanki',
-    role: 'Owner',
-  },
   tagline: 'Weighing scales & weighbridge solutions in Ahmedabad',
   phone: {
     display: '+91 99138 13861',

@@ -2,6 +2,7 @@ import { ArrowRight, BadgeCheck, Cable, MapPin, MessageSquareText, Star } from '
 import { Link } from 'react-router-dom'
 import CtaBand from '../components/common/CtaBand'
 import Icon from '../components/common/Icon'
+import { OwnerCardCompact } from '../components/common/OwnerCard'
 import Reveal from '../components/common/Reveal'
 import ReviewsSummary from '../components/common/ReviewsSummary'
 import SectionHeading from '../components/common/SectionHeading'
@@ -9,6 +10,7 @@ import ServiceCard from '../components/common/ServiceCard'
 import WhatsAppIcon from '../components/common/WhatsAppIcon'
 import ProductCard from '../components/products/ProductCard'
 import { business } from '../data/business'
+import { owners } from '../data/owners'
 import { services } from '../data/services'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { getCategories, getFeaturedProducts, getProducts } from '../services/catalogService'
@@ -187,6 +189,35 @@ function Introduction() {
   )
 }
 
+function OwnersPreview() {
+  return (
+    <section aria-labelledby="home-owners-heading" className="border-t border-steel-200 py-14 sm:py-16">
+      <div className="container-x grid gap-8 lg:grid-cols-12 lg:items-center">
+        <Reveal className="lg:col-span-4">
+          <p className="eyebrow">Meet our owners</p>
+          <h2 id="home-owners-heading" className="mt-3 text-3xl font-bold">
+            The people behind {business.name}
+          </h2>
+          <Link
+            to="/about#owners"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-600 hover:underline"
+          >
+            Meet our owners on About Us
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </Reveal>
+        <div className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
+          {owners.map((owner, i) => (
+            <Reveal key={owner.id} delay={i * 100}>
+              <OwnerCardCompact owner={owner} />
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function FeaturedProducts() {
   const featured = getFeaturedProducts().slice(0, 3)
   return (
@@ -334,6 +365,7 @@ export default function Home() {
       <Hero />
       <CategoryStrip />
       <Introduction />
+      <OwnersPreview />
       <FeaturedProducts />
       <WeighbridgeBand />
       <ServicesPreview />
