@@ -1,48 +1,61 @@
-// Service offerings. Scope, coverage area and pricing are awaiting confirmation
-// from VISAT INSTRUMENTS, so every service carries `status: 'to-be-confirmed'`.
+// Service offerings. Sales, Service & Maintenance, Installation and AMC are confirmed by
+// VISAT INSTRUMENTS; scope, coverage area and charges are shared on enquiry.
+// `published: false` entries are kept for the admin panel but never shown on the website.
 
 export const services = [
+  {
+    id: 'svc-sales',
+    slug: 'sales',
+    title: 'Sales',
+    icon: 'Truck',
+    summary: 'Supply of weighbridges and weighbridge parts, accessories and spares.',
+    details: ['Fully electronic weighbridges', 'Weighbridge parts and accessories', 'Spares'],
+    status: 'confirmed',
+    published: true,
+  },
+  {
+    id: 'svc-service-maintenance',
+    slug: 'service-maintenance',
+    title: 'Service & Maintenance',
+    icon: 'Wrench',
+    summary: 'Service and maintenance support for weighbridges.',
+    details: ['Service visits', 'Maintenance', 'Replacement parts and spares'],
+    status: 'confirmed',
+    published: true,
+  },
   {
     id: 'svc-installation',
     slug: 'installation',
     title: 'Installation',
-    icon: 'Wrench',
-    summary: 'Setting up weighing scales, indicators and weighbridges at your site.',
-    details: [
-      'Weighbridge platform installation',
-      'Indicator and junction box connection',
-      'Software setup on your PC',
-    ],
-    status: 'to-be-confirmed',
-  },
-  {
-    id: 'svc-repair',
-    slug: 'repair',
-    title: 'Repair',
     icon: 'Hammer',
-    summary: 'Diagnosis and repair of weighing scales and weighing electronics.',
-    details: ['Scale and indicator faults', 'Load cell and wiring checks', 'Junction box issues'],
-    status: 'to-be-confirmed',
+    summary: 'Installation of weighbridges at your site.',
+    details: ['Weighbridge installation', 'Connection of weighing electronics'],
+    status: 'confirmed',
+    published: true,
   },
   {
-    id: 'svc-maintenance',
-    slug: 'maintenance',
-    title: 'Maintenance',
+    id: 'svc-amc',
+    slug: 'amc',
+    title: 'Annual Maintenance Contract (AMC)',
     icon: 'ShieldCheck',
-    summary: 'Periodic checks to keep weighing equipment working reliably.',
-    details: ['Routine inspection', 'Cleaning and cable checks', 'Weighbridge upkeep'],
-    status: 'to-be-confirmed',
+    summary: 'Annual Maintenance Contract for weighbridges.',
+    details: ['Yearly maintenance contract', 'Terms shared on enquiry'],
+    status: 'confirmed',
+    published: true,
   },
   {
     id: 'svc-calibration',
     slug: 'calibration',
     title: 'Calibration',
     icon: 'Gauge',
-    summary: 'Adjusting scales and weighbridges so readings stay accurate.',
-    details: ['Scale calibration', 'Weighbridge calibration', 'Accuracy checks'],
+    summary: 'Calibration of weighing equipment.',
+    details: [],
     status: 'to-be-confirmed',
+    published: false, // not confirmed: do not show on the website
   },
 ]
+
+export const publishedServices = services.filter((s) => s.published)
 
 export const weighbridgeSolutions = {
   components: [

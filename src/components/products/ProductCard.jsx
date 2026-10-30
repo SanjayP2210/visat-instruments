@@ -12,7 +12,7 @@ export default function ProductCard({ product }) {
   return (
     <article className="group card flex h-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-navy-100 hover:shadow-[0_18px_40px_-20px_rgb(11_31_58/0.35)]">
       <Link to={detailUrl} tabIndex={-1} aria-hidden="true" className="relative block">
-        <ProductImage image={product.image} />
+        <ProductImage image={product.image} label={product.name} />
         {category && (
           <span className="absolute top-3 left-3 rounded bg-navy-900/90 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white">
             {category.name}

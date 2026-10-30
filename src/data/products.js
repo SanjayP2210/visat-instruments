@@ -6,8 +6,18 @@
 // Content rule: only describe what is visible in the actual photographs.
 // Capacities, accuracy, prices, models and other specifications are
 // intentionally left as "On enquiry" until confirmed by VISAT INSTRUMENTS.
+// Products without an original photograph have `image: null` and show a
+// "Photo coming soon" placeholder; never substitute stock or poster images.
+//
+// `kind` groups products for the spare parts & accessories section:
+// system | part | accessory | software | instrument.
 
 export const PENDING = 'On enquiry'
+
+const enquiryOnlySpecs = () => [
+  { label: 'Specifications', value: PENDING },
+  { label: 'Price', value: PENDING },
+]
 
 export const categories = [
   {
@@ -64,6 +74,24 @@ export const categories = [
     description: 'PC software for recording weighbridge tickets and reports.',
     sortOrder: 6,
   },
+  {
+    id: 'cat-load-cells',
+    icon: 'Gauge',
+    slug: 'load-cells',
+    name: 'Load Cells',
+    shortName: 'Load Cells',
+    description: 'Load cells used in weighbridge systems.',
+    sortOrder: 7,
+  },
+  {
+    id: 'cat-printers-accessories',
+    icon: 'Printer',
+    slug: 'printers-accessories',
+    name: 'Printers & Accessories',
+    shortName: 'Accessories',
+    description: 'Printers and accessories supplied with weighbridge systems.',
+    sortOrder: 8,
+  },
 ]
 
 export const products = [
@@ -72,6 +100,7 @@ export const products = [
     slug: 'digital-weighing-indicator',
     name: 'Digital Weighing Indicator',
     categoryId: 'cat-indicators',
+    kind: 'instrument',
     featured: true,
     image: {
       src: '/images/products/kanot.webp',
@@ -100,6 +129,7 @@ export const products = [
     slug: 'electronic-weighing-scale',
     name: 'Electronic Weighing Scale',
     categoryId: 'cat-scales',
+    kind: 'instrument',
     featured: true,
     image: {
       src: '/images/products/kato.webp',
@@ -129,6 +159,7 @@ export const products = [
     slug: 'load-cell-junction-box',
     name: 'Load Cell Junction Box',
     categoryId: 'cat-junction-boxes',
+    kind: 'part',
     featured: true,
     image: {
       src: '/images/products/socket.webp',
@@ -156,6 +187,7 @@ export const products = [
     slug: 'wireless-serial-communication-module',
     name: 'Wireless Serial Communication Module',
     categoryId: 'cat-communication',
+    kind: 'accessory',
     featured: false,
     image: {
       src: '/images/products/adapter.webp',
@@ -180,9 +212,10 @@ export const products = [
   },
   {
     id: 'prd-weighbridge',
-    slug: 'electronic-weighbridge',
-    name: 'Electronic Weighbridge',
+    slug: 'electronic-weighbridge', // kept so existing links keep working
+    name: 'Fully Electronic Weighbridge',
     categoryId: 'cat-weighbridges',
+    kind: 'system',
     featured: true,
     image: {
       src: '/images/products/bridge.webp',
@@ -211,6 +244,7 @@ export const products = [
     slug: 'weighbridge-software',
     name: 'Weighbridge Software',
     categoryId: 'cat-software',
+    kind: 'software',
     featured: true,
     image: {
       src: '/images/products/meter.webp',
@@ -234,5 +268,74 @@ export const products = [
       { label: 'Indicator compatibility', value: PENDING },
       { label: 'Price', value: PENDING },
     ],
+  },
+
+  // Products listed in VISAT INSTRUMENTS' promotional material. No original photographs yet,
+  // and no specifications have been confirmed, so only the names and their place in a
+  // weighbridge system are stated.
+  {
+    id: 'prd-it-kit',
+    slug: 'it-kit',
+    name: 'IT Kit (Interface / Junction Kit)',
+    categoryId: 'cat-junction-boxes',
+    kind: 'part',
+    featured: false,
+    image: null,
+    summary: 'Interface / junction kit for weighbridge systems.',
+    description: 'IT Kit (interface / junction kit), supplied as a part for weighbridge systems. Details and specifications are shared on enquiry.',
+    highlights: [],
+    specifications: enquiryOnlySpecs(),
+  },
+  {
+    id: 'prd-cup-ball-load-cell',
+    slug: 'cup-ball-type-load-cell',
+    name: 'Cup-Ball Type Load Cell',
+    categoryId: 'cat-load-cells',
+    kind: 'part',
+    featured: false,
+    image: null,
+    summary: 'Cup-ball type load cell for weighbridge systems.',
+    description: 'Cup-ball type load cell, supplied as a part for weighbridge systems. Capacity and specifications are shared on enquiry.',
+    highlights: [],
+    specifications: enquiryOnlySpecs(),
+  },
+  {
+    id: 'prd-jumbo-display',
+    slug: 'jumbo-display',
+    name: 'Jumbo Display',
+    categoryId: 'cat-indicators',
+    kind: 'part',
+    featured: false,
+    image: null,
+    summary: 'Jumbo weight display for weighbridge systems.',
+    description: 'Jumbo display for showing weight readings at a weighbridge. Size and specifications are shared on enquiry.',
+    highlights: [],
+    specifications: enquiryOnlySpecs(),
+  },
+  {
+    id: 'prd-printer',
+    slug: 'printer',
+    name: 'Printer',
+    categoryId: 'cat-printers-accessories',
+    kind: 'accessory',
+    featured: false,
+    image: null,
+    summary: 'Printer supplied as a weighbridge accessory.',
+    description: 'Printer supplied as an accessory for weighbridge systems. Model and specifications are shared on enquiry.',
+    highlights: [],
+    specifications: enquiryOnlySpecs(),
+  },
+  {
+    id: 'prd-usb-keyboard',
+    slug: 'usb-keyboard',
+    name: 'USB Keyboard',
+    categoryId: 'cat-printers-accessories',
+    kind: 'accessory',
+    featured: false,
+    image: null,
+    summary: 'USB keyboard supplied as a weighbridge accessory.',
+    description: 'USB keyboard supplied as an accessory for weighbridge systems. Details are shared on enquiry.',
+    highlights: [],
+    specifications: enquiryOnlySpecs(),
   },
 ]

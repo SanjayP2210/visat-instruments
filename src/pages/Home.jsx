@@ -11,7 +11,7 @@ import WhatsAppIcon from '../components/common/WhatsAppIcon'
 import ProductCard from '../components/products/ProductCard'
 import { business } from '../data/business'
 import { owners } from '../data/owners'
-import { services } from '../data/services'
+import { publishedServices } from '../data/services'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { getCategories, getFeaturedProducts, getProducts } from '../services/catalogService'
 import { generalEnquiryMessage, whatsappLink } from '../utils/whatsapp'
@@ -304,8 +304,8 @@ function ServicesPreview() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeading
             eyebrow="Services"
-            title="Support for your weighing equipment"
-            intro="Service offerings are being finalised. Contact us to confirm availability for your equipment and location."
+            title="Sales, service, installation & AMC"
+            intro="Weighbridge sales, service and maintenance, installation and Annual Maintenance Contracts. Contact us for scope and charges."
           />
           <Link to="/services" className="btn-outline shrink-0">
             All services
@@ -313,7 +313,7 @@ function ServicesPreview() {
           </Link>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {services.map((service, i) => (
+          {publishedServices.map((service, i) => (
             <Reveal key={service.id} delay={i * 70}>
               <ServiceCard service={service} />
             </Reveal>
@@ -352,6 +352,15 @@ function Reviews() {
         <SectionHeading align="center" eyebrow="Reviews" title="What our customers say" className="mb-12" />
         <Reveal className="mx-auto max-w-4xl">
           <ReviewsSummary />
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link to="/reviews" className="btn-outline">
+              Read customer reviews
+            </Link>
+            <Link to="/reviews#write" className="btn-primary">
+              Write a review
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
         </Reveal>
       </div>
     </section>

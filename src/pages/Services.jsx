@@ -4,10 +4,10 @@ import PageHero from '../components/common/PageHero'
 import Reveal from '../components/common/Reveal'
 import ServiceCard from '../components/common/ServiceCard'
 import { business } from '../data/business'
-import { services } from '../data/services'
+import { publishedServices } from '../data/services'
 import { usePageTitle } from '../hooks/usePageTitle'
 
-const serviceEnquiry = `Hello ${business.name},\nI would like to enquire about service (installation / repair / maintenance / calibration) for my weighing equipment.\nEquipment: \nLocation: `
+const serviceEnquiry = `Hello ${business.name},\nI would like to enquire about your services (sales / service & maintenance / installation / AMC).\nEquipment: \nLocation: `
 
 export default function Services() {
   usePageTitle('Services')
@@ -15,8 +15,8 @@ export default function Services() {
     <>
       <PageHero
         eyebrow="Services"
-        title="Installation, repair, maintenance & calibration"
-        intro="Service support for weighing scales, indicators and weighbridges."
+        title="Sales, service, installation & AMC"
+        intro="Sales, service and maintenance, installation and Annual Maintenance Contracts for weighbridges."
         crumbs={[{ label: 'Services' }]}
       />
 
@@ -25,14 +25,13 @@ export default function Services() {
           <div className="flex gap-3 rounded-xl border border-accent-100 bg-accent-50 p-5 text-sm text-navy-800">
             <Info className="mt-0.5 h-5 w-5 shrink-0 text-accent-600" aria-hidden="true" />
             <p>
-              <strong>Please note:</strong> the services below are planned offerings and are{' '}
-              <strong>to be confirmed</strong>. Availability, scope, service area and charges depend on your equipment and
-              location — please call or WhatsApp {business.phone.display} to confirm before booking.
+              Scope, service area and charges depend on your equipment and location. Please call or WhatsApp{' '}
+              {business.phone.display} to discuss your requirement.
             </p>
           </div>
 
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {services.map((service, i) => (
+            {publishedServices.map((service, i) => (
               <Reveal key={service.id} delay={i * 70}>
                 <ServiceCard service={service} showDetails />
               </Reveal>

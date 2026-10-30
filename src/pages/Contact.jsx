@@ -137,8 +137,8 @@ function EnquiryForm() {
           </optgroup>
           <optgroup label="Other">
             <option value="Complete weighbridge solution">Complete weighbridge solution</option>
-            <option value="Service (installation / repair / maintenance / calibration)">
-              Service (installation / repair / maintenance / calibration)
+            <option value="Service (sales / service & maintenance / installation / AMC)">
+              Service (sales / service & maintenance / installation / AMC)
             </option>
             <option value="Other">Other</option>
           </optgroup>

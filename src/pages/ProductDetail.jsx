@@ -40,19 +40,25 @@ export default function ProductDetail() {
       <section className="section">
         <div className="container-x grid gap-10 lg:grid-cols-2 lg:gap-14">
           <div>
-            <button
-              type="button"
-              onClick={() => setPreview(true)}
-              className="group relative block w-full overflow-hidden rounded-2xl border border-steel-200"
-              aria-label={`Enlarge photo of ${product.name}`}
-            >
-              <ProductImage image={{ ...product.image, fit: 'contain' }} eager />
-              <span className="absolute right-3 bottom-3 inline-flex items-center gap-1.5 rounded-md bg-navy-900/85 px-3 py-1.5 text-xs font-semibold text-white">
-                <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
-                Enlarge
-              </span>
-            </button>
-            <p className="mt-3 text-xs text-steel-500">Actual product photograph.</p>
+            {product.image ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPreview(true)}
+                  className="group relative block w-full overflow-hidden rounded-2xl border border-steel-200"
+                  aria-label={`Enlarge photo of ${product.name}`}
+                >
+                  <ProductImage image={{ ...product.image, fit: 'contain' }} eager />
+                  <span className="absolute right-3 bottom-3 inline-flex items-center gap-1.5 rounded-md bg-navy-900/85 px-3 py-1.5 text-xs font-semibold text-white">
+                    <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    Enlarge
+                  </span>
+                </button>
+                <p className="mt-3 text-xs text-steel-500">Actual product photograph.</p>
+              </>
+            ) : (
+              <ProductImage image={null} label={product.name} className="rounded-2xl border border-steel-200" />
+            )}
           </div>
 
           <div>
@@ -67,15 +73,19 @@ export default function ProductDetail() {
             <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Overview</h2>
             <p className="mt-4 text-base leading-relaxed text-steel-600">{product.description}</p>
 
-            <h3 className="mt-8 text-lg font-bold">Key features (as pictured)</h3>
-            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-              {product.highlights.map((h) => (
-                <li key={h} className="flex gap-2 text-sm text-navy-800">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-500" aria-hidden="true" />
-                  {h}
-                </li>
-              ))}
-            </ul>
+            {product.highlights.length > 0 && (
+              <>
+                <h3 className="mt-8 text-lg font-bold">Key features (as pictured)</h3>
+                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {product.highlights.map((h) => (
+                    <li key={h} className="flex gap-2 text-sm text-navy-800">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-500" aria-hidden="true" />
+                      {h}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
             <div className="mt-8 overflow-hidden rounded-xl border border-steel-200">
               <div className="flex items-center justify-between gap-3 bg-navy-50 px-4 py-3">
@@ -127,7 +137,7 @@ export default function ProductDetail() {
         </div>
       </section>
 
-      {preview && (
+      {preview && product.image && (
         <Lightbox
           items={[{ src: product.image.src, alt: product.image.alt, title: product.name, caption: product.summary }]}
           index={0}
