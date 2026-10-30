@@ -16,7 +16,7 @@ export default function Footer() {
       <div className="h-1 bg-accent-500" aria-hidden="true" />
       <div className="container-x grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-12">
         <div className="lg:col-span-4">
-          <Logo light />
+          <Logo variant="footer" />
           <p className="mt-5 max-w-sm text-sm leading-relaxed">
             {business.type} in Ahmedabad, offering weighing scales, indicators, junction boxes, weighbridge systems and
             weighbridge software.

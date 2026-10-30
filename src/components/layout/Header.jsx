@@ -8,7 +8,7 @@ import { navLinks } from './navigation'
 const desktopLinkClass = ({ isActive }) =>
   `relative px-2.5 py-2 text-sm font-semibold transition-colors xl:px-3 ${
     isActive
-      ? 'text-navy-900 after:absolute after:inset-x-2.5 after:-bottom-[17px] after:h-0.5 after:bg-accent-500'
+      ? 'text-navy-900 after:absolute after:inset-x-2.5 after:-bottom-[29px] after:h-0.5 after:bg-accent-500'
       : 'text-steel-600 hover:text-navy-900'
   }`
 
@@ -64,11 +64,11 @@ export default function Header() {
       </div>
 
       <header
-        className={`sticky top-0 z-40 border-b bg-white/95 backdrop-blur transition-shadow ${
+        className={`sticky top-0 z-40 border-b bg-white transition-shadow ${
           scrolled ? 'border-steel-200 shadow-[0_6px_20px_-12px_rgb(11_31_58/0.25)]' : 'border-transparent'
         }`}
       >
-        <div className="container-x flex h-16 items-center justify-between gap-4">
+        <div className="container-x flex h-16 items-center justify-between gap-4 lg:h-[88px]">
           <Logo />
 
           <nav aria-label="Main" className="hidden lg:block">
@@ -113,7 +113,7 @@ export default function Header() {
           className="animate-fade-in fixed inset-0 z-50 overflow-y-auto bg-white lg:hidden"
         >
           <div className="container-x flex h-16 items-center justify-between border-b border-steel-200">
-            <Logo />
+            <Logo variant="menu" />
             <button
               type="button"
               className="grid h-10 w-10 place-items-center rounded-md text-navy-900 hover:bg-navy-50"
