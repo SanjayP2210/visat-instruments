@@ -75,7 +75,19 @@ describe('content request validation', () => {
 
   it('business profile: links must be http(s); no unknown fields', () => {
     expect(businessProfileUpdate.safeParse({ mapsUrl: 'javascript:alert(1)' }).success).toBe(false)
-    expect(businessProfileUpdate.safeParse({ socialLinks: [{ platform: 'Facebook', url: 'https://facebook.com/x' }] }).success).toBe(true)
+    expect(businessProfileUpdate.safeParse({ socialLinks: [{ platform: 'facebook', url: 'https://facebook.com/x', enabled: true }] }).success).toBe(true)
+  })
+
+  it('business profile: social links are limited to supported platforms and their own websites', () => {
+    const ok = (socialLinks) => businessProfileUpdate.safeParse({ socialLinks }).success
+    expect(ok([{ platform: 'instagram', url: '', enabled: false }])).toBe(true) // empty is allowed
+    expect(ok([{ platform: 'youtube', url: 'https://www.youtube.com/@x', enabled: true }, { platform: 'linkedin', url: 'https://in.linkedin.com/company/x', enabled: true }])).toBe(true)
+    expect(ok([{ platform: 'twitter', url: 'https://x.com/x', enabled: true }])).toBe(false)
+    expect(ok([{ platform: 'facebook', url: 'http://facebook.com/x', enabled: true }])).toBe(false) // https only
+    expect(ok([{ platform: 'facebook', url: 'https://instagram.com/x', enabled: true }])).toBe(false) // wrong site
+    expect(ok([{ platform: 'facebook', url: 'https://facebook.com.evil.example/x', enabled: true }])).toBe(false)
+    expect(ok([{ platform: 'facebook', url: 'javascript:alert(1)', enabled: true }])).toBe(false)
+    expect(ok([{ platform: 'facebook', url: '', enabled: false }, { platform: 'facebook', url: '', enabled: false }])).toBe(false) // duplicate
     expect(businessProfileUpdate.safeParse({ key: 'other' }).success).toBe(false)
   })
 })

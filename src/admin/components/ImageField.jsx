@@ -3,7 +3,7 @@
 import { ImageOff, Loader2, Trash2, Upload } from 'lucide-react'
 import { useId, useState } from 'react'
 import { api, checkImage } from '../api/client'
-import { useMediaStatus } from './MediaStatus'
+import { limitMb, useMediaStatus } from './MediaStatus'
 import { useToast } from './Toast'
 import { ConfirmDialog } from './ui'
 
@@ -97,7 +97,7 @@ export default function ImageField({ label, image, uploadPath, removePath, onSav
               )}
             </div>
           )}
-          <p className="text-xs text-steel-500">{configured ? hint ?? `JPG, PNG or WebP, up to ${Math.round((maxBytes / 1024 / 1024) * 10) / 10} MB.` : 'Image uploads are not configured on the server.'}</p>
+          <p className="text-xs text-steel-500">{configured ? `${hint ? `${hint} ` : ''}JPG, PNG or WebP, up to ${limitMb(maxBytes)} MB.` : 'Image uploads are not configured on the server.'}</p>
         </div>
       </div>
       {confirming && <ConfirmDialog title="Remove image?" message="The image will be deleted from storage." confirmLabel="Remove" busy={removing} onConfirm={remove} onCancel={() => setConfirming(false)} />}

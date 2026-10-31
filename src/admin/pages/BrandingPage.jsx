@@ -2,7 +2,7 @@ import { RefreshCw, Trash2, Upload } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 import { api, checkImage } from '../api/client'
 import { ImagePreview, UploadProgress } from '../components/ImageField'
-import { useMediaStatus } from '../components/MediaStatus'
+import { UploadLimit, useMediaStatus } from '../components/MediaStatus'
 import { useToast } from '../components/Toast'
 import { Badge, ConfirmDialog, ErrorState, PageHeader, Spinner, Toggle } from '../components/ui'
 
@@ -119,6 +119,7 @@ function SlotSection({ slot, assets, onChanged, onDelete }) {
           </>
         )}
       </div>
+      <UploadLimit />
       {progress !== null && (
         <div className="space-y-1">
           <UploadProgress value={progress} />

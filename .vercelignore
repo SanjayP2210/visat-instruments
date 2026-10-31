@@ -1,0 +1,25 @@
+# Files never uploaded to Vercel. The build needs only: package files, index.html, vite.config.js,
+# vercel.json, public/, src/, api/ and server/ (package files + src/).
+
+# Secrets and local settings (any folder)
+.env*
+**/.env*
+.vercel
+
+# Dependencies and build output (installed and built on Vercel)
+node_modules
+**/node_modules
+dist
+
+# Tests and test output
+e2e
+test-results
+playwright-report
+playwright.config.js
+server/tests
+server/vitest.config.js
+
+# Development notes and reference material
+docs
+CLAUDE.md
+.claude

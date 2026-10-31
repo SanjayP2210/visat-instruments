@@ -15,7 +15,8 @@
     "seed:content": "node --env-file=.env src/scripts/seedContent.js",
     "media:check": "node --env-file=.env src/scripts/checkCloudinary.js",
     "media:cleanup": "node --env-file=.env src/scripts/cleanupMedia.js",
-    "admin:reset-password": "node --env-file=.env src/scripts/resetAdminPassword.js"
+    "admin:reset-password": "node --env-file=.env src/scripts/resetAdminPassword.js",
+    "reviews:sample": "node --env-file=.env src/scripts/sampleReviews.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

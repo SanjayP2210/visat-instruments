@@ -24,6 +24,20 @@
   --color-steel-200: #dde3ea;
 }
 
+/* Gujarati: Noto Sans Gujarati (it also covers Latin) for every text style, and roomier
+   heading line heights so vowel signs above/below letters are not clipped. Unlayered, so it
+   wins over the tight leading utilities used for English headings. */
+html:lang(gu) {
+  --font-sans: 'Noto Sans Gujarati', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Noto Sans Gujarati', 'Barlow Semi Condensed', ui-sans-serif, system-ui, sans-serif;
+}
+html:lang(gu) :is(h1, h2, h3) {
+  line-height: 1.35;
+}
+[lang='gu'] {
+  font-family: 'Noto Sans Gujarati', ui-sans-serif, system-ui, sans-serif;
+}
+
 @utility btn {
   @apply inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60;
 }
@@ -31,6 +45,17 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+  }
+  /* Tailwind v4 no longer gives buttons a pointer cursor; restore it for every clickable control. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  select:not(:disabled),
+  summary,
+  label:has(> input[type='radio'], > input[type='checkbox']) {
+    cursor: pointer;
+  }
+  :disabled {
+    cursor: not-allowed;
   }
   body {
     @apply bg-white font-sans text-navy-900 antialiased;
@@ -130,7 +155,47 @@
   animation: zoom-in 0.25s ease both;
 }
 
+/* Customer reviews: star pop and card entrance (see ReviewCard / ReviewsCarousel) */
+@keyframes star-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.review-star {
+  display: inline-block;
+  animation: star-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.review-slide-enter {
+  animation: card-rise 0.5s ease-out both;
+}
+.carousel-track {
+  transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .review-star,
+  .review-slide-enter {
+    animation: none;
+  }
+  .carousel-track {
+    transition: none;
+  }
   html {
     scroll-behavior: auto;
   }

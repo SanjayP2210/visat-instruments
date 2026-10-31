@@ -20,6 +20,12 @@ export default defineConfig({
     channel: 'chrome',
     trace: 'off',
     screenshot: 'only-on-failure',
+    // Visitors have already declined analytics, so the consent banner does not cover the page.
+    // e2e/analytics.spec.js starts without this to test the banner itself.
+    storageState: {
+      cookies: [],
+      origins: [{ origin: `http://localhost:${WEB_PORT}`, localStorage: [{ name: 'vi_analytics_consent', value: '{"analytics":false}' }] }],
+    },
   },
   webServer: [
     {

@@ -1,4 +1,6 @@
+export { EVENT_TYPES, PageView, VisitorEvent, VisitorSession } from './analytics.js'
 export { Brand, BRAND_RELATIONSHIPS } from './Brand.js'
+export { AdminActivityLog, LOG_LEVELS, SystemLog } from './logs.js'
 export { BusinessProfile } from './BusinessProfile.js'
 export { Category, GALLERY_TYPES, GalleryItem, Product, PRODUCT_KINDS, Service } from './catalog.js'
 export { RateLimit } from './RateLimit.js'

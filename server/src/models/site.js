@@ -1,6 +1,6 @@
 // Customer enquiries, editable website content and SEO settings.
 import mongoose from 'mongoose'
-import { cleanJson, imageSchema } from './shared.js'
+import { cleanJson, imageSchema, localizedField } from './shared.js'
 
 /* ---------- Enquiry ---------- */
 export const ENQUIRY_STATUSES = Object.freeze(['new', 'in-progress', 'resolved', 'closed'])
@@ -50,6 +50,7 @@ const siteContentSchema = new mongoose.Schema(
   {
     key: { type: String, required: true, trim: true, lowercase: true, maxlength: 60, unique: true, match: /^[a-z0-9-]+$/ },
     data: { type: mongoose.Schema.Types.Mixed, default: {} },
+    gu: localizedField, // Gujarati version of `data` (same structure; empty values fall back to English)
     published: { type: Boolean, default: false }, // hidden until confirmed and published
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
@@ -116,6 +117,7 @@ const seoSettingSchema = new mongoose.Schema(
     description: { type: String, trim: true, maxlength: 170, default: '' },
     keywords: [{ type: String, trim: true, maxlength: 60 }],
     ogImage: { type: imageSchema },
+    gu: localizedField,
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true },

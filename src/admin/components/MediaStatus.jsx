@@ -13,3 +13,13 @@ export function MediaStatusProvider({ children }) {
 }
 
 export const useMediaStatus = () => useContext(MediaContext)
+
+/** Upload limit in MB as set on the server (4 MB on Vercel, 5 MB elsewhere by default). */
+export const limitMb = (maxBytes) => Math.round((maxBytes / 1024 / 1024) * 10) / 10
+
+/** "JPG, PNG or WebP, up to N MB each." — the live server limit, shown once it is known. */
+export function UploadLimit({ className = '' }) {
+  const { configured, maxBytes, loaded } = useMediaStatus()
+  if (!loaded || !configured) return null
+  return <p className={`text-xs text-steel-500 ${className}`}>JPG, PNG or WebP, up to {limitMb(maxBytes)} MB each.</p>
+}

@@ -1,17 +1,19 @@
 import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useT } from '../../i18n/LanguageContext'
 
 export default function PageHero({ eyebrow, title, intro, crumbs = [] }) {
+  const t = useT()
   return (
     <section className="relative overflow-hidden bg-navy-900 text-white">
       <div className="grid-lines absolute inset-0" aria-hidden="true" />
       <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-navy-800/60 lg:block" aria-hidden="true" />
       <div className="container-x relative py-14 sm:py-20">
-        <nav aria-label="Breadcrumb" className="mb-6">
+        <nav aria-label={t('nav.breadcrumb')} className="mb-6">
           <ol className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-navy-100/70">
             <li>
               <Link to="/" className="hover:text-white">
-                Home
+                {t('nav.home')}
               </Link>
             </li>
             {crumbs.map((crumb) => (

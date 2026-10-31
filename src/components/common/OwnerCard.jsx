@@ -1,10 +1,12 @@
 import { ArrowRight, Phone } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useT } from '../../i18n/LanguageContext'
 import OwnerPhoto from './OwnerPhoto'
 import WhatsAppIcon from './WhatsAppIcon'
 
 // Full profile card for the About page.
 export function OwnerCard({ owner }) {
+  const t = useT()
   return (
     <article className="group card flex h-full flex-col overflow-hidden transition-shadow duration-300 hover:shadow-[0_18px_40px_-20px_rgb(11_31_58/0.35)]">
       <div className="relative">
@@ -16,17 +18,19 @@ export function OwnerCard({ owner }) {
         <h3 className="mt-1 text-3xl font-bold text-navy-900">{owner.name}</h3>
         <p className="mt-3 flex-1 text-sm leading-relaxed text-steel-600">{owner.intro}</p>
         <div className="mt-6 flex flex-col gap-3 border-t border-steel-200 pt-6 sm:flex-row sm:flex-wrap">
-          <a href={`tel:${owner.phone.tel}`} className="btn-navy" aria-label={`Call ${owner.name} on ${owner.phone.display}`}>
-            <Phone className="h-4 w-4" aria-hidden="true" />
-            {owner.phone.display}
-          </a>
+          {owner.phone && (
+            <a href={`tel:${owner.phone.tel}`} className="btn-navy" aria-label={t('owner.call', { name: owner.name, number: owner.phone.display })}>
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              {owner.phone.display}
+            </a>
+          )}
           {owner.whatsapp && (
             <a
               href={owner.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-whatsapp"
-              aria-label={`Chat with ${owner.name} on WhatsApp`}
+              aria-label={t('wa.chatWith', { name: owner.name })}
             >
               <WhatsAppIcon className="h-4 w-4" />
               WhatsApp
@@ -40,6 +44,7 @@ export function OwnerCard({ owner }) {
 
 // Compact profile for the home page; links to the full profiles on About Us.
 export function OwnerCardCompact({ owner }) {
+  const t = useT()
   return (
     <Link
       to="/about#owners"
@@ -50,7 +55,7 @@ export function OwnerCardCompact({ owner }) {
         <span className="block text-xs font-bold tracking-widest text-accent-600 uppercase">{owner.role}</span>
         <span className="mt-0.5 block font-display text-2xl font-bold text-navy-900">{owner.name}</span>
         <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-steel-500 group-hover:text-accent-600">
-          View profile <ArrowRight className="h-3 w-3" aria-hidden="true" />
+          {t('owner.viewProfile')} <ArrowRight className="h-3 w-3" aria-hidden="true" />
         </span>
       </span>
     </Link>

@@ -1,7 +1,8 @@
 // Request schemas for the content APIs. Every body is strict: unknown fields are rejected.
 import { z } from 'zod'
 import { BRAND_RELATIONSHIPS } from '../models/Brand.js'
-import { GALLERY_TYPES, PRODUCT_KINDS } from '../models/catalog.js'
+import { SOCIAL_PLATFORMS } from '../models/BusinessProfile.js'
+import { AVAILABILITY, GALLERY_TYPES, GST_MODES, PRICING_TYPES, PRODUCT_KINDS } from '../models/catalog.js'
 import { ASSET_SLOTS } from '../models/media.js'
 import { ENQUIRY_STATUSES, ENQUIRY_TYPES, REVIEW_SOURCES, REVIEW_STATUSES } from '../models/site.js'
 import { booleanParam, email, listQuery, objectId } from './common.js'
@@ -27,6 +28,12 @@ export const seo = z
   })
   .strict()
 
+// Gujarati version of a record: same text fields as English, all optional. Empty strings
+// (or empty list entries) mean "not translated yet" and fall back to English on the website.
+const guOf = (shape) => z.object(shape).partial().strict()
+const guList = (max, size = 20) => z.array(text(max)).max(size)
+const guSeo = guOf({ title: text(70), description: text(170), keywords: z.array(text(60)).max(20) })
+
 /** Partial update of a create schema: at least one field. */
 const updateOf = (schema) =>
   schema
@@ -48,6 +55,7 @@ export const categoryCreate = z
     icon: iconName.optional(),
     sortOrder: sortOrder.optional(),
     active: z.boolean().optional(),
+    gu: guOf({ name: text(100), shortName: text(40), description: text(1000) }).optional(),
   })
   .strict()
 export const categoryUpdate = updateOf(categoryCreate)
@@ -75,6 +83,23 @@ export const brandList = listQuery({
 
 /* ---------- products ---------- */
 const specification = z.object({ label: text(100, { min: 1 }), value: text(300, { min: 1 }) }).strict()
+const price = z.number().min(0).max(100000000).nullable()
+export const pricing = z
+  .object({
+    type: z.enum(PRICING_TYPES),
+    originalPrice: price.optional(),
+    sellingPrice: price.optional(),
+    gst: z.enum(GST_MODES).optional(),
+    gstRate: z.number().min(0).max(28).nullable().optional(),
+    additionalCharges: optionalText(200),
+    availability: z.enum(AVAILABILITY).optional(),
+  })
+  .strict()
+  .superRefine((p, ctx) => {
+    if (p.type !== 'request-quote' && p.sellingPrice == null) ctx.addIssue({ code: 'custom', path: ['sellingPrice'], message: 'Enter the selling price, or choose "Request quote".' })
+    if (p.originalPrice != null && p.sellingPrice != null && p.originalPrice < p.sellingPrice)
+      ctx.addIssue({ code: 'custom', path: ['originalPrice'], message: 'The original price cannot be lower than the selling price.' })
+  })
 export const productCreate = z
   .object({
     name: text(150, { min: 2 }),
@@ -86,10 +111,19 @@ export const productCreate = z
     description: optionalText(5000),
     highlights: z.array(text(200, { min: 1 })).max(20).optional(),
     specifications: z.array(specification).max(40).optional(),
+    pricing: pricing.optional(),
     featured: z.boolean().optional(),
     active: z.boolean().optional(),
     sortOrder: sortOrder.optional(),
     seo: seo.optional(),
+    gu: guOf({
+      name: text(150),
+      summary: text(400),
+      description: text(5000),
+      highlights: guList(200),
+      specifications: z.array(z.object({ label: text(100), value: text(300) }).strict()).max(40),
+      seo: guSeo,
+    }).optional(),
   })
   .strict()
 export const productUpdate = updateOf(productCreate)
@@ -124,6 +158,7 @@ export const serviceCreate = z
     active: z.boolean().optional(),
     sortOrder: sortOrder.optional(),
     seo: seo.optional(),
+    gu: guOf({ title: text(100), summary: text(400), details: guList(200), seo: guSeo }).optional(),
   })
   .strict()
 export const serviceUpdate = updateOf(serviceCreate)
@@ -151,6 +186,7 @@ export const galleryUpdate = updateOf(
       relatedProducts: z.array(objectId).max(20),
       sortOrder,
       active: z.boolean(),
+      gu: guOf({ title: text(120), caption: text(300), tag: text(40), alt: text(300) }),
     })
     .strict(),
 )
@@ -222,8 +258,23 @@ const owner = z
     phone: z.object({ display: optionalText(30), tel: optionalText(20) }).strict().optional(),
     whatsappNumber: z.string().trim().regex(/^\d{0,15}$/, 'Digits only, e.g. 919879992228.').optional(),
     sortOrder: sortOrder.optional(),
+    gu: guOf({ name: text(100), role: text(60), intro: text(1000) }).optional(),
   })
   .strict()
+// A profile link must be an https:// address on the platform's own website (or left empty).
+const SOCIAL_HOSTS = { facebook: /(^|\.)(facebook\.com|fb\.com)$/, instagram: /(^|\.)instagram\.com$/, youtube: /(^|\.)(youtube\.com|youtu\.be)$/, linkedin: /(^|\.)linkedin\.com$/ }
+const isProfileUrl = (platform, value) => {
+  try {
+    const u = new URL(value)
+    return u.protocol === 'https:' && SOCIAL_HOSTS[platform].test(u.hostname.toLowerCase())
+  } catch {
+    return false
+  }
+}
+const socialLink = z
+  .object({ platform: z.enum(SOCIAL_PLATFORMS), url: z.string().trim().max(500), enabled: z.boolean() })
+  .strict()
+  .refine((s) => s.url === '' || isProfileUrl(s.platform, s.url), { message: 'Enter the full https:// link to this platform’s profile page.', path: ['url'] })
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use 24-hour time, e.g. 09:30.')
 export const businessProfileUpdate = updateOf(
   z
@@ -248,12 +299,13 @@ export const businessProfileUpdate = updateOf(
       openingHours: z
         .array(z.object({ day: z.enum(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']), open: hhmm.optional(), close: hhmm.optional(), closed: z.boolean().optional() }).strict())
         .max(7),
-      socialLinks: z.array(z.object({ platform: text(40, { min: 1 }), url: url.refine((v) => v !== '', 'Enter a link.') }).strict()).max(10),
-      rating: z
-        .object({ value: z.number().min(0).max(5).optional(), count: z.number().int().min(0).optional(), source: optionalText(40) })
-        .strict(),
+      socialLinks: z
+        .array(socialLink)
+        .max(SOCIAL_PLATFORMS.length)
+        .refine((list) => new Set(list.map((s) => s.platform)).size === list.length, 'Each platform can only be listed once.'),
       owners: z.array(owner).max(10),
       primaryBrand: nullableId,
+      gu: guOf({ name: text(120), type: text(120), tagline: text(200), description: text(5000), contactPerson: text(100), addressLines: guList(200, 6) }),
     })
     .strict(),
 )
@@ -269,13 +321,17 @@ export const contentKeyParams = z.object({ key: z.enum(CONTENT_KEYS) })
 export const contentUpdate = z
   .object({
     data: z.record(z.string().regex(/^[A-Za-z0-9_-]{1,60}$/), jsonValue).refine((d) => JSON.stringify(d).length <= 50000, 'Content is too large.').optional(),
+    gu: z.record(z.string().regex(/^[A-Za-z0-9_-]{1,60}$/), jsonValue).refine((d) => JSON.stringify(d).length <= 50000, 'Content is too large.').optional(),
     published: z.boolean().optional(),
   })
   .strict()
   .refine((b) => Object.keys(b).length > 0, 'Nothing to update.')
 
 export const seoPageParams = z.object({ page: z.enum(SEO_PAGES) })
-export const seoUpdate = seo.refine((b) => Object.keys(b).length > 0, 'Nothing to update.')
+export const seoUpdate = seo
+  .extend({ gu: guSeo.optional() })
+  .strict()
+  .refine((b) => Object.keys(b).length > 0, 'Nothing to update.')
 
 /* ---------- branding & media assets ---------- */
 export const assetCreate = z

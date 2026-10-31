@@ -1,13 +1,14 @@
-import { business } from '../../data/business'
-import { generalEnquiryMessage } from '../../utils/whatsapp'
+import { useBusiness } from '../../context/SiteData'
+import { useT } from '../../i18n/LanguageContext'
 import ContactButtons from './ContactButtons'
 import Reveal from './Reveal'
 
-export default function CtaBand({
-  title = 'Need a weighing scale or weighbridge?',
-  text = `Talk to ${business.name} directly. Share your requirement and we will get back to you with options.`,
-  message = generalEnquiryMessage,
-}) {
+export default function CtaBand({ title, text, message }) {
+  const business = useBusiness()
+  const t = useT()
+  title ??= t('cta.bandTitle')
+  text ??= t('cta.bandText', { name: business.name })
+  message ??= t('wa.general', { name: business.name })
   return (
     <section className="section bg-white">
       <div className="container-x">

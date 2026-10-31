@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useSite } from '../../context/SiteData'
 
 const LOGO_ALT = 'VISAT INSTRUMENTS – Weighbridge and Industrial Weighing Solutions'
 
@@ -11,17 +12,20 @@ const sizes = {
 }
 
 export default function Logo({ variant = 'header' }) {
+  const { assets, business } = useSite()
   const light = variant === 'footer'
+  // Logo uploaded in Branding & Media (placement-specific first), else the built-in artwork.
+  const uploaded = (variant === 'footer' ? assets['footer-logo'] : assets['header-logo']) ?? assets.logo
   return (
-    <Link to="/" className="group inline-flex items-center gap-3" aria-label="VISAT INSTRUMENTS home">
+    <Link to="/" className="group inline-flex items-center gap-3" aria-label={`${business.name} home`}>
       <span className={`shrink-0 ${light ? 'rounded-xl bg-white p-1.5' : ''}`}>
         <img
-          src="/images/branding/visat-instruments-logo-160.png"
-          srcSet="/images/branding/visat-instruments-logo-160.png 160w, /images/branding/visat-instruments-logo-240.png 240w"
+          src={uploaded?.src ?? '/images/branding/visat-instruments-logo-160.png'}
+          srcSet={uploaded ? undefined : '/images/branding/visat-instruments-logo-160.png 160w, /images/branding/visat-instruments-logo-240.png 240w'}
           sizes={variant === 'header' ? '(min-width: 1024px) 70px, 52px' : variant === 'menu' ? '52px' : '72px'}
           width="160"
           height="160"
-          alt={LOGO_ALT}
+          alt={uploaded?.alt || LOGO_ALT}
           decoding="async"
           fetchPriority={variant === 'header' ? 'high' : undefined}
           loading={variant === 'footer' ? 'lazy' : 'eager'}

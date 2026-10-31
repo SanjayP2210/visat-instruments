@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { cleanJson, imageSchema } from './shared.js'
+import { cleanJson, imageSchema, localizedField } from './shared.js'
 
 const phoneSchema = new mongoose.Schema(
   {
@@ -17,6 +17,7 @@ const ownerSchema = new mongoose.Schema({
   whatsappNumber: { type: String, trim: true, maxlength: 20, default: '' }, // digits only, e.g. 919879992228
   photo: { type: imageSchema },
   sortOrder: { type: Number, default: 0 },
+  gu: localizedField,
 })
 cleanJson(ownerSchema)
 
@@ -71,10 +72,14 @@ export const DEFAULT_CONTACT_NUMBERS = Object.freeze([
   { label: 'Mobile', person: 'Manish Solanki', displayNumber: '+91 99138 13861', dialNumber: '+919913813861', isWhatsApp: true, isPrimary: false },
 ])
 
+// Supported social media platforms. No profile links are preset: they are entered in the admin panel.
+export const SOCIAL_PLATFORMS = Object.freeze(['facebook', 'instagram', 'youtube', 'linkedin'])
+
 const socialSchema = new mongoose.Schema(
   {
-    platform: { type: String, required: true, trim: true, maxlength: 40 },
-    url: { type: String, required: true, trim: true, maxlength: 500 },
+    platform: { type: String, required: true, trim: true, lowercase: true, maxlength: 40 },
+    url: { type: String, trim: true, maxlength: 500, default: '' },
+    enabled: { type: Boolean, default: false },
   },
   { _id: false },
 )
@@ -115,6 +120,7 @@ const businessProfileSchema = new mongoose.Schema(
     },
     owners: [ownerSchema],
     primaryBrand: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand' },
+    gu: localizedField,
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true },

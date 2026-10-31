@@ -1,6 +1,6 @@
 // Catalogue content: categories, products, services and gallery items.
 import mongoose from 'mongoose'
-import { cleanJson, imageSchema, seoSchema, slugField } from './shared.js'
+import { cleanJson, imageSchema, localizedField, seoSchema, slugField } from './shared.js'
 
 const auditFields = {
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -16,6 +16,7 @@ const categorySchema = new mongoose.Schema(
     description: { type: String, trim: true, maxlength: 1000, default: '' },
     icon: { type: String, trim: true, maxlength: 40, default: '' }, // lucide icon name
     sortOrder: { type: Number, default: 0 },
+    gu: localizedField,
     active: { type: Boolean, default: true },
     ...auditFields,
   },
@@ -36,6 +37,24 @@ cleanJson(specificationSchema)
 // Groups products for the spare parts & accessories section.
 export const PRODUCT_KINDS = Object.freeze(['system', 'part', 'accessory', 'software', 'instrument'])
 
+// Pricing is entered by the owner only. 'request-quote' (the default) never shows a price;
+// the discount is always calculated from the two prices, never typed in.
+export const PRICING_TYPES = Object.freeze(['request-quote', 'fixed', 'starting-from'])
+export const GST_MODES = Object.freeze(['not-specified', 'inclusive', 'exclusive'])
+export const AVAILABILITY = Object.freeze(['not-specified', 'in-stock', 'made-to-order', 'out-of-stock'])
+const pricingSchema = new mongoose.Schema(
+  {
+    type: { type: String, enum: PRICING_TYPES, default: 'request-quote' },
+    originalPrice: { type: Number, min: 0, max: 100000000 }, // MRP / list price in INR
+    sellingPrice: { type: Number, min: 0, max: 100000000 },
+    gst: { type: String, enum: GST_MODES, default: 'not-specified' },
+    gstRate: { type: Number, min: 0, max: 28 },
+    additionalCharges: { type: String, trim: true, maxlength: 200, default: '' },
+    availability: { type: String, enum: AVAILABILITY, default: 'not-specified' },
+  },
+  { _id: false },
+)
+
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 150 },
@@ -47,11 +66,13 @@ const productSchema = new mongoose.Schema(
     description: { type: String, trim: true, maxlength: 5000, default: '' },
     highlights: [{ type: String, trim: true, maxlength: 200 }],
     specifications: [specificationSchema],
+    pricing: { type: pricingSchema, default: () => ({}) },
     images: { type: [imageSchema], validate: [(v) => v.length <= 12, 'A product can have at most 12 images.'] },
     featured: { type: Boolean, default: false },
     active: { type: Boolean, default: true },
     sortOrder: { type: Number, default: 0 },
     seo: { type: seoSchema, default: () => ({}) },
+    gu: localizedField,
     ...auditFields,
   },
   { timestamps: true },
@@ -77,6 +98,7 @@ const serviceSchema = new mongoose.Schema(
     active: { type: Boolean, default: true }, // shown on the website
     sortOrder: { type: Number, default: 0 },
     seo: { type: seoSchema, default: () => ({}) },
+    gu: localizedField,
     ...auditFields,
   },
   { timestamps: true },
@@ -99,6 +121,7 @@ const galleryItemSchema = new mongoose.Schema(
     image: { type: imageSchema, required: true },
     active: { type: Boolean, default: true },
     sortOrder: { type: Number, default: 0 },
+    gu: localizedField,
     ...auditFields,
   },
   { timestamps: true },

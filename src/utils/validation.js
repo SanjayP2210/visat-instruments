@@ -8,16 +8,17 @@ export function validateEnquiry(values) {
   const email = values.email.trim()
   const message = values.message.trim()
 
-  if (!name) errors.name = 'Please enter your name.'
-  else if (name.length < 2) errors.name = 'Name must be at least 2 characters.'
+  // Values are translation keys (src/i18n); forms show them with t().
+  if (!name) errors.name = 'val.nameRequired'
+  else if (name.length < 2) errors.name = 'val.nameShort'
 
-  if (!phone) errors.phone = 'Please enter your phone number.'
-  else if (!PHONE_RE.test(phone)) errors.phone = 'Enter a valid 10-digit Indian mobile number.'
+  if (!phone) errors.phone = 'val.phoneRequired'
+  else if (!PHONE_RE.test(phone)) errors.phone = 'val.phoneInvalid'
 
-  if (email && !EMAIL_RE.test(email)) errors.email = 'Enter a valid email address.'
+  if (email && !EMAIL_RE.test(email)) errors.email = 'val.emailInvalid'
 
-  if (!message) errors.message = 'Please tell us what you need.'
-  else if (message.length < 10) errors.message = 'Message should be at least 10 characters.'
+  if (!message) errors.message = 'val.messageRequired'
+  else if (message.length < 10) errors.message = 'val.messageShort'
 
   return errors
 }

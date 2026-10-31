@@ -13,6 +13,7 @@ export function loadTestEnv() {
   process.env.LOGIN_RATE_LIMIT_MAX = '10000'
   process.env.ENQUIRY_RATE_LIMIT_MAX = '10000'
   process.env.REVIEW_RATE_LIMIT_MAX = '10000'
+  process.env.TRACK_RATE_LIMIT_MAX = '10000'
   if (!process.env.MONGODB_URI_TEST) throw new Error('MONGODB_URI_TEST is not set in server/.env')
   if (!String(process.env.MONGODB_DB_TEST || 'visat_test').endsWith('_test')) throw new Error('MONGODB_DB_TEST must end with "_test"')
 }

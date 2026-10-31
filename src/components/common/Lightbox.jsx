@@ -1,7 +1,9 @@
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useCallback, useEffect, useRef } from 'react'
+import { useT } from '../../i18n/LanguageContext'
 
 export default function Lightbox({ items, index, onClose, onChange }) {
+  const t = useT()
   const closeRef = useRef(null)
   const item = items[index]
   const count = items.length
@@ -35,7 +37,7 @@ export default function Lightbox({ items, index, onClose, onChange }) {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Image preview: ${item.title}`}
+      aria-label={t('lightbox.preview', { title: item.title })}
       className="animate-fade-in fixed inset-0 z-50 flex flex-col bg-navy-950/95"
       onClick={onClose}
     >
@@ -48,7 +50,7 @@ export default function Lightbox({ items, index, onClose, onChange }) {
           type="button"
           onClick={onClose}
           className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/10"
-          aria-label="Close preview"
+          aria-label={t('lightbox.close')}
         >
           <X className="h-6 w-6" aria-hidden="true" />
         </button>
@@ -71,7 +73,7 @@ export default function Lightbox({ items, index, onClose, onChange }) {
                 prev()
               }}
               className="absolute left-2 grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:left-6"
-              aria-label="Previous image"
+              aria-label={t('lightbox.previous')}
             >
               <ChevronLeft className="h-6 w-6" aria-hidden="true" />
             </button>
@@ -82,7 +84,7 @@ export default function Lightbox({ items, index, onClose, onChange }) {
                 next()
               }}
               className="absolute right-2 grid h-11 w-11 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:right-6"
-              aria-label="Next image"
+              aria-label={t('lightbox.next')}
             >
               <ChevronRight className="h-6 w-6" aria-hidden="true" />
             </button>

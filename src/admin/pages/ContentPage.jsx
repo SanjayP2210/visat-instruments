@@ -1,6 +1,7 @@
 import { AlertTriangle, Pencil } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import GujaratiFields, { cleanGu } from '../components/GujaratiFields'
 import { useToast } from '../components/Toast'
 import { Badge, ConfirmDialog, ErrorState, Modal, PageHeader, Spinner, StringList, TextArea, TextInput, Toggle } from '../components/ui'
 
@@ -27,6 +28,8 @@ function SectionEditor({ section, current, onClose, onSaved }) {
   const simple = isSimple(data)
   const [form, setForm] = useState({ title: data.title ?? '', intro: data.intro ?? '', items: data.items ?? [] })
   const [json, setJson] = useState(JSON.stringify(data, null, 2))
+  const [gu, setGu] = useState(current?.gu ?? {}) // Gujarati version (same structure as data)
+  const [guJson, setGuJson] = useState(JSON.stringify(current?.gu ?? {}, null, 2))
   const [published, setPublished] = useState(Boolean(current?.published))
   const [error, setError] = useState('')
   const [confirmPublish, setConfirmPublish] = useState(false)
@@ -47,11 +50,21 @@ function SectionEditor({ section, current, onClose, onSaved }) {
         return setError('Enter valid JSON (an object, e.g. { "title": "…" }).')
       }
     }
+    let guBody
+    if (simple) guBody = cleanGu(gu)
+    else {
+      try {
+        guBody = JSON.parse(guJson || '{}')
+        if (!guBody || typeof guBody !== 'object' || Array.isArray(guBody)) throw new Error()
+      } catch {
+        return setError('Enter valid Gujarati JSON (an object), or leave it as {}.')
+      }
+    }
     if (section.unconfirmed && published && !current?.published && !force) return setConfirmPublish(true)
     setBusy(true)
     setError('')
     try {
-      await api.put(`/content/${section.key}`, { data: body, published })
+      await api.put(`/content/${section.key}`, { data: body, gu: guBody, published })
       toast.success(`${section.label} saved${published ? ' and published' : ''}.`)
       onSaved()
     } catch (err) {
@@ -75,9 +88,13 @@ function SectionEditor({ section, current, onClose, onSaved }) {
             <TextInput id="c-title" label="Title" value={form.title} onChange={(v) => setForm((f) => ({ ...f, title: v }))} />
             <TextArea id="c-intro" label="Introduction" value={form.intro} onChange={(v) => setForm((f) => ({ ...f, intro: v }))} rows={3} />
             <StringList id="c-items" label="Items" value={form.items} onChange={(v) => setForm((f) => ({ ...f, items: v }))} max={50} />
+            <GujaratiFields id="c" fields={[{ name: 'title', label: 'Title' }, { name: 'intro', label: 'Introduction', type: 'textarea' }, { name: 'items', label: 'Items', type: 'list' }]} english={form} value={gu} onChange={setGu} />
           </>
         ) : (
-          <TextArea id="c-json" label="Content (JSON)" value={json} onChange={setJson} rows={14} className="font-mono" hint="Structured content. Keep the existing keys; the website reads them." />
+          <>
+            <TextArea id="c-json" label="Content (JSON)" value={json} onChange={setJson} rows={14} className="font-mono" hint="Structured content. Keep the existing keys; the website reads them." />
+            <TextArea id="c-json-gu" label="ગુજરાતી (Gujarati) version — JSON, optional" value={guJson} onChange={setGuJson} rows={10} className="font-mono" hint="Same structure as the English JSON, with only the text you have translated. Anything missing or empty shows in English." />
+          </>
         )}
         <Toggle id="c-published" label="Published on the website" checked={published} onChange={setPublished} />
         {error && <p role="alert" className="text-sm font-medium text-red-600">{error}</p>}

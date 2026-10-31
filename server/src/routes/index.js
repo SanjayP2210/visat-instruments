@@ -10,6 +10,9 @@ import { ROLES } from '../models/User.js'
 import { sendData } from '../utils/http.js'
 import { changePasswordBody, createUserBody, listUsersQuery, loginBody, resetPasswordBody, updateUserBody } from '../validators/auth.js'
 import { idParams } from '../validators/common.js'
+import { trackBody } from '../validators/analytics.js'
+import { createAnalyticsService } from '../services/analyticsService.js'
+import { createAnalyticsRouter, trackHandler } from './analytics.js'
 import { createContentRouter } from './content.js'
 
 export function createApiRouter(config, deps) {
@@ -18,6 +21,7 @@ export function createApiRouter(config, deps) {
   const adminOnly = [auth, requireRole(ROLES.ADMIN)]
   const authCtl = authController(config)
   const userCtl = userController(config)
+  const analytics = createAnalyticsService(config)
 
   // Health: works without a database so deployments can be checked.
   router.get('/health', async (_req, res) => {
@@ -30,6 +34,15 @@ export function createApiRouter(config, deps) {
 
   router.use(originCheck(config))
   router.use(ensureDatabase(config))
+
+  // Analytics beacon: its own limiter only, so tracking does not add a second rate-limit write per request.
+  router.post(
+    '/public/track',
+    createRateLimiter('track', { windowMs: config.rateLimit.windowMs, limit: config.rateLimit.trackMax }),
+    validate({ body: trackBody }),
+    trackHandler(analytics),
+  )
+
   router.use(createRateLimiter('api', { windowMs: config.rateLimit.windowMs, limit: config.rateLimit.max }))
 
   /* ---------- auth ---------- */
@@ -52,6 +65,7 @@ export function createApiRouter(config, deps) {
   router.delete('/users/:id', ...adminOnly, validate({ params: idParams }), userCtl.remove)
 
   router.use(createContentRouter(config, deps))
+  router.use(createAnalyticsRouter(config, analytics))
 
   router.use(notFound)
   return router

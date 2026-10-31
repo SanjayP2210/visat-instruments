@@ -3,7 +3,8 @@ import { useId, useState } from 'react'
 import { api, checkImage } from '../api/client'
 import { ImagePreview, UploadProgress } from '../components/ImageField'
 import { ListToolbar, Pagination } from '../components/ListView'
-import { useMediaStatus } from '../components/MediaStatus'
+import { UploadLimit, useMediaStatus } from '../components/MediaStatus'
+import GujaratiFields, { cleanGu } from '../components/GujaratiFields'
 import { useToast } from '../components/Toast'
 import { Badge, ConfirmDialog, EmptyState, ErrorState, Modal, PageHeader, Select, Spinner, TextArea, TextInput, Toggle } from '../components/ui'
 import { useList } from '../hooks/useList'
@@ -18,7 +19,7 @@ const titleFromFile = (name) => name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, '
 
 function EditItem({ item, onClose, onSaved }) {
   const toast = useToast()
-  const [form, setForm] = useState({ title: item.title, caption: item.caption ?? '', alt: item.image?.alt ?? '', type: item.type, location: item.location ?? '', active: item.active })
+  const [form, setForm] = useState({ title: item.title, caption: item.caption ?? '', alt: item.image?.alt ?? '', type: item.type, location: item.location ?? '', active: item.active, gu: item.gu ?? {} })
   const [errors, setErrors] = useState({})
   const [busy, setBusy] = useState(false)
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
@@ -26,7 +27,7 @@ function EditItem({ item, onClose, onSaved }) {
     if (form.title.trim().length < 2) return setErrors({ title: 'Title must be at least 2 characters.' })
     setBusy(true)
     try {
-      await api.patch(`/gallery/${item.id}`, form)
+      await api.patch(`/gallery/${item.id}`, { ...form, gu: cleanGu(form.gu) })
       toast.success('Gallery item saved.')
       onSaved()
     } catch (err) {
@@ -45,6 +46,7 @@ function EditItem({ item, onClose, onSaved }) {
         <TextInput id="g-alt" label="Alt text" value={form.alt} onChange={(v) => set('alt', v)} hint="Describes the photo for screen readers." />
         <Select id="g-type" label="Type" value={form.type} onChange={(v) => set('type', v)} options={TYPES} />
         <TextInput id="g-location" label="Location" value={form.location} onChange={(v) => set('location', v)} hint="Only if confirmed by the business." />
+        <GujaratiFields id="g" fields={[{ name: 'title', label: 'Title', maxLength: 120 }, { name: 'caption', label: 'Description', type: 'textarea', rows: 2, maxLength: 300 }, { name: 'alt', label: 'Alt text', maxLength: 300 }]} english={form} value={form.gu} onChange={(v) => set('gu', v)} />
         <Toggle id="g-active" label="Shown on the website" checked={form.active} onChange={(v) => set('active', v)} />
       </div>
     </Modal>
@@ -135,6 +137,7 @@ export default function GalleryPage() {
           </>
         }
       />
+      <UploadLimit className="mb-4" />
       {uploads.length > 0 && (
         <ul className="mb-4 space-y-2">
           {uploads.map((u) => (

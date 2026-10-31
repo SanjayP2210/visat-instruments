@@ -1,6 +1,6 @@
 // Admin panel (/admin). Lazy-loaded and kept out of the public site's layout; all data
 // access is authorised by the backend (session cookie + CSRF token + role checks).
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import AdminLayout from './components/AdminLayout'
@@ -16,6 +16,13 @@ import GalleryPage from './pages/GalleryPage'
 import LoginPage from './pages/LoginPage'
 import { BrandForm, BrandList, CategoryForm, CategoryList, ProductForm, ProductList, ServiceForm, ServiceList, TestimonialForm, TestimonialList, UserForm, UserList } from './pages/resources'
 import SeoPage from './pages/SeoPage'
+
+// Analytics & Logs (Admin only) load on demand: the charts library stays out of the main admin bundle.
+const AnalyticsOverviewPage = lazy(() => import('./pages/analytics/OverviewPage'))
+const VisitorAnalyticsPage = lazy(() => import('./pages/analytics/VisitorAnalyticsPage'))
+const VisitorActivityPage = lazy(() => import('./pages/analytics/VisitorActivityPage'))
+const SystemLogsPage = lazy(() => import('./pages/analytics/SystemLogsPage'))
+const AdminActivityPage = lazy(() => import('./pages/analytics/AdminActivityPage'))
 
 function useNoIndex() {
   useEffect(() => {
@@ -46,11 +53,11 @@ function RequireAdmin({ children }) {
     return (
       <div className="card max-w-lg p-6" role="alert">
         <h1 className="text-2xl font-bold">Admins only</h1>
-        <p className="mt-2 text-sm text-steel-600">Your account (Editor) cannot manage users. Ask an Admin if you need access.</p>
+        <p className="mt-2 text-sm text-steel-600">Your account (Editor) cannot open this page. Ask an Admin if you need access.</p>
       </div>
     )
   }
-  return children
+  return <Suspense fallback={<Spinner className="p-10" />}>{children}</Suspense>
 }
 
 const crudRoutes = (path, List, Form) => [
@@ -90,6 +97,11 @@ export default function AdminApp() {
             <Route path="users" element={<RequireAdmin><UserList /></RequireAdmin>} />
             <Route path="users/new" element={<RequireAdmin><UserForm /></RequireAdmin>} />
             <Route path="users/:id" element={<RequireAdmin><UserForm /></RequireAdmin>} />
+            <Route path="analytics" element={<RequireAdmin><AnalyticsOverviewPage /></RequireAdmin>} />
+            <Route path="analytics/visitors" element={<RequireAdmin><VisitorAnalyticsPage /></RequireAdmin>} />
+            <Route path="analytics/activity" element={<RequireAdmin><VisitorActivityPage /></RequireAdmin>} />
+            <Route path="logs/system" element={<RequireAdmin><SystemLogsPage /></RequireAdmin>} />
+            <Route path="logs/admin-activity" element={<RequireAdmin><AdminActivityPage /></RequireAdmin>} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Route>
         </Routes>

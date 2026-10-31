@@ -4,6 +4,7 @@
 // - deletions that fail are queued in MediaCleanup and retried later.
 import { MediaCleanup } from '../models/media.js'
 import { errors } from '../utils/http.js'
+import { logSystem } from './logService.js'
 
 export function createMediaService(storage) {
   const requireStorage = () => {
@@ -12,8 +13,15 @@ export function createMediaService(storage) {
   }
 
   async function uploadOne(file, { folder, alt = '' }) {
-    const stored = await requireStorage().upload(file.buffer, { folder })
-    return { ...stored, alt }
+    const target = requireStorage()
+    try {
+      const stored = await target.upload(file.buffer, { folder })
+      return { ...stored, alt }
+    } catch (err) {
+      await logSystem({ level: 'error', code: 'CLOUDINARY_UPLOAD_FAILED', message: err.message, context: { folder, size: file.size, type: file.mimetype } })
+      err.logged = true // the error handler does not log it a second time
+      throw err
+    }
   }
 
   /** Deletes a stored image; local site images (no publicId) are left alone. Never throws. */
@@ -24,6 +32,7 @@ export function createMediaService(storage) {
       await requireStorage().destroy(publicId)
       await MediaCleanup.deleteOne({ publicId })
     } catch (err) {
+      await logSystem({ level: 'warn', code: 'CLOUDINARY_DELETE_FAILED', message: err.message, context: { reason } })
       await MediaCleanup.updateOne(
         { publicId },
         { $set: { reason, lastError: String(err.message).slice(0, 500) }, $inc: { attempts: 1 } },

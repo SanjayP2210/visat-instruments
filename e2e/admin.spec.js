@@ -69,7 +69,7 @@ test('manages categories with validation, product counts and delete confirmation
   await page.getByRole('link', { name: 'Add category' }).click()
   await page.getByRole('button', { name: 'Create' }).click()
   await expect(page.getByText('Category name is required.')).toBeVisible()
-  await page.getByLabel('Category name').fill('E2E Test Category')
+  await page.getByLabel('Category name').first().fill('E2E Test Category')
   await expect(page.getByLabel('Web address (slug)')).toHaveValue('e2e-test-category')
   await page.getByRole('button', { name: 'Create' }).click()
   await toast(page, 'created')
@@ -92,7 +92,7 @@ test('manages categories with validation, product counts and delete confirmation
 test('creates a product and manages its images in Cloudinary', async ({ page }) => {
   await signIn(page)
   await page.goto('/admin/products/new')
-  await page.getByLabel('Product name').fill('E2E Weighing Product')
+  await page.getByLabel('Product name').first().fill('E2E Weighing Product')
   await page.getByLabel('Category').selectOption({ label: 'Load Cells' })
   await page.getByLabel('Product type').selectOption('part')
   await page.getByRole('button', { name: 'Create' }).click()
@@ -133,7 +133,7 @@ test('creates a product and manages its images in Cloudinary', async ({ page }) 
   await expect(images).toHaveCount(1)
 
   // SEO fields and saving changes.
-  await page.getByLabel('Meta title').fill('E2E Weighing Product')
+  await page.getByLabel('Meta title').first().fill('E2E Weighing Product')
   await page.getByRole('button', { name: 'Save changes' }).click()
   await toast(page, 'Changes saved')
 
@@ -173,6 +173,37 @@ test('edits the business profile primary contact', async ({ page }) => {
   await toast(page, 'Business profile saved')
   await page.reload()
   await expect(page.getByLabel('Primary contact').nth(0)).toBeChecked()
+})
+
+test('social media links set in the admin panel appear on the website without a redeploy', async ({ page }) => {
+  await signIn(page)
+  await page.goto('/admin/business-profile')
+  await page.getByLabel('Facebook profile URL').fill('https://example.com/not-facebook')
+  await expect(page.getByText('Enter the full https:// link to the Facebook page.')).toBeVisible()
+  await page.getByLabel('Facebook profile URL').fill('https://www.facebook.com/e2e-test-page')
+  await page.getByLabel('Show Facebook').check({ force: true })
+  await page.getByLabel('Instagram profile URL').fill('https://www.instagram.com/e2e-test-page')
+  await page.getByLabel('Show Instagram').uncheck({ force: true })
+  await page.getByRole('button', { name: 'Save changes' }).click()
+  await toast(page, 'Business profile saved')
+
+  try {
+    await page.goto('/contact')
+    for (const area of [page.locator('footer'), page.locator('main')]) {
+      const facebook = area.getByRole('link', { name: /Facebook/ })
+      await expect(facebook).toHaveAttribute('href', 'https://www.facebook.com/e2e-test-page')
+      await expect(facebook).toHaveAttribute('target', '_blank')
+      await expect(facebook).toHaveAttribute('rel', 'noopener noreferrer')
+      await expect(area.getByRole('link', { name: /Instagram|YouTube|LinkedIn/ })).toHaveCount(0) // disabled or empty
+    }
+  } finally {
+    // clear the test links again
+    await page.goto('/admin/business-profile')
+    for (const name of ['Facebook', 'Instagram']) await page.getByLabel(`${name} profile URL`).fill('')
+    await page.getByLabel('Show Facebook').uncheck({ force: true })
+    await page.getByRole('button', { name: 'Save changes' }).click()
+    await toast(page, 'Business profile saved')
+  }
 })
 
 test('handles a customer enquiry from the website', async ({ page }) => {

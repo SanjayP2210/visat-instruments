@@ -1,8 +1,10 @@
 import { MapPin, Menu, Phone, Star, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { business } from '../../data/business'
+import { useBusiness } from '../../context/SiteData'
+import { useT } from '../../i18n/LanguageContext'
 import Logo from '../common/Logo'
+import LanguageSwitch from './LanguageSwitch'
 import { navLinks } from './navigation'
 
 const desktopLinkClass = ({ isActive }) =>
@@ -18,6 +20,8 @@ const mobileLinkClass = ({ isActive }) =>
   }`
 
 export default function Header() {
+  const business = useBusiness()
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const { pathname } = useLocation()
@@ -48,13 +52,15 @@ export default function Header() {
         <div className="container-x flex h-9 items-center justify-between">
           <p className="flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-accent-400" aria-hidden="true" />
-            Chandlodiya, Ahmedabad, Gujarat
+            {t('header.location')}
           </p>
           <div className="flex items-center gap-5">
-            <span className="flex items-center gap-1.5">
-              <Star className="h-3.5 w-3.5 fill-accent-400 text-accent-400" aria-hidden="true" />
-              {business.rating.value.toFixed(1)} on {business.rating.source} ({business.rating.count} reviews)
-            </span>
+            {business.rating && (
+              <Link to="/reviews" className="flex items-center gap-1.5 hover:text-accent-400">
+                <Star className="h-3.5 w-3.5 fill-accent-400 text-accent-400" aria-hidden="true" />
+                {t('rating.short', { value: business.rating.value.toFixed(1), count: business.rating.count })}
+              </Link>
+            )}
             <a href={`tel:${business.phone.tel}`} className="flex items-center gap-1.5 font-semibold text-white hover:text-accent-400">
               <Phone className="h-3.5 w-3.5" aria-hidden="true" />
               {business.phone.display}
@@ -71,13 +77,13 @@ export default function Header() {
         <div className="container-x flex h-16 items-center justify-between gap-4 lg:h-[88px]">
           <Logo />
 
-          <nav aria-label="Main" className="hidden lg:block">
+          <nav aria-label={t('nav.main')} className="hidden lg:block">
             <ul className="flex items-center">
               {navLinks.map((link) => (
                 <li key={link.to}>
                   <NavLink to={link.to} end={link.end} className={desktopLinkClass}>
-                    <span className="xl:hidden">{link.shortLabel ?? link.label}</span>
-                    <span className="hidden xl:inline">{link.label}</span>
+                    <span className="xl:hidden">{t(link.shortLabel ?? link.label)}</span>
+                    <span className="hidden xl:inline">{t(link.label)}</span>
                   </NavLink>
                 </li>
               ))}
@@ -85,8 +91,9 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <LanguageSwitch />
             <Link to="/contact" className="btn-primary hidden py-2.5 sm:inline-flex">
-              Get a Quote
+              {t('cta.quote')}
             </Link>
             <button
               type="button"
@@ -94,7 +101,7 @@ export default function Header() {
               onClick={() => setOpen(true)}
               aria-expanded={open}
               aria-controls="mobile-menu"
-              aria-label="Open menu"
+              aria-label={t('nav.openMenu')}
             >
               <Menu className="h-6 w-6" aria-hidden="true" />
             </button>
@@ -109,7 +116,7 @@ export default function Header() {
           id="mobile-menu"
           role="dialog"
           aria-modal="true"
-          aria-label="Site menu"
+          aria-label={t('nav.siteMenu')}
           className="animate-fade-in fixed inset-0 z-50 overflow-y-auto bg-white lg:hidden"
         >
           <div className="container-x flex h-16 items-center justify-between border-b border-steel-200">
@@ -118,18 +125,18 @@ export default function Header() {
               type="button"
               className="grid h-10 w-10 place-items-center rounded-md text-navy-900 hover:bg-navy-50"
               onClick={() => setOpen(false)}
-              aria-label="Close menu"
+              aria-label={t('nav.closeMenu')}
               autoFocus
             >
               <X className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
-          <nav aria-label="Mobile" className="container-x py-4">
+          <nav aria-label={t('nav.mobile')} className="container-x py-4">
             <ul className="space-y-1">
               {navLinks.map((link) => (
                 <li key={link.to}>
                   <NavLink to={link.to} end={link.end} className={mobileLinkClass}>
-                    {link.label}
+                    {t(link.label)}
                   </NavLink>
                 </li>
               ))}
@@ -137,10 +144,10 @@ export default function Header() {
             <div className="mt-6 grid gap-3 border-t border-steel-200 pt-6">
               <a href={`tel:${business.phone.tel}`} className="btn-navy">
                 <Phone className="h-4 w-4" aria-hidden="true" />
-                Call {business.phone.display}
+                {t('cta.callNumber', { number: business.phone.display })}
               </a>
               <Link to="/contact" className="btn-primary">
-                Get a Quote
+                {t('cta.quote')}
               </Link>
             </div>
           </nav>

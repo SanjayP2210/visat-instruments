@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import ImageField, { ImagePreview } from '../components/ImageField'
+import { cleanGu } from '../components/GujaratiFields'
 import ProductImages from '../components/ProductImages'
 import { ResourceForm, ResourceList, useOptions } from '../components/Resource'
 import { useToast } from '../components/Toast'
@@ -22,7 +23,25 @@ const KINDS = [
 ]
 const slugField = { name: 'slug', label: 'Web address (slug)', required: true, slugFrom: 'title', hint: 'Lowercase letters, numbers and hyphens. Changing it changes the page link.' }
 const sortField = { name: 'sortOrder', label: 'Display order', type: 'number', hint: 'Lower numbers appear first.' }
+// Optional Gujarati version of the record's text (see GujaratiFields).
+const guField = (fields) => ({ name: 'gu', label: 'Gujarati version', type: 'gu', fields, fromRecord: (r) => r?.gu ?? {} })
+const withGu = (v) => ('gu' in v ? { ...v, gu: cleanGu(v.gu) } : v)
 const seoField = { name: 'seo', label: 'SEO', type: 'seo', fromRecord: (r) => ({ title: r?.seo?.title ?? '', description: r?.seo?.description ?? '', keywords: r?.seo?.keywords ?? [] }) }
+
+// Pricing form values ('' for empty numbers) ↔ API body (null for empty numbers).
+const pricingValues = (p = {}) => ({
+  type: p.type ?? 'request-quote',
+  originalPrice: p.originalPrice ?? '',
+  sellingPrice: p.sellingPrice ?? '',
+  gst: p.gst ?? 'not-specified',
+  gstRate: p.gstRate ?? '',
+  additionalCharges: p.additionalCharges ?? '',
+  availability: p.availability ?? 'not-specified',
+})
+const pricingPayload = (p) => {
+  const num = (v) => (v === '' || v === undefined ? null : v)
+  return { ...p, originalPrice: num(p.originalPrice), sellingPrice: num(p.sellingPrice), gstRate: num(p.gstRate) }
+}
 
 /* ---------------- Products ---------------- */
 export function ProductList() {
@@ -73,12 +92,21 @@ export function ProductForm() {
         { name: 'description', label: 'Description', type: 'textarea', rows: 5, hint: 'Factual details only. Do not add unconfirmed capacities, accuracy or certifications.' },
         { name: 'highlights', label: 'Key features', type: 'list', placeholder: 'e.g. Steel deck with side guard rails' },
         { name: 'specifications', label: 'Specifications', type: 'specs', fromRecord: (r) => (r?.specifications ?? []).map(({ label, value }) => ({ label, value })) },
+        { name: 'pricing', label: 'Pricing', type: 'pricing', fromRecord: (r) => pricingValues(r?.pricing) },
         { name: 'featured', label: 'Featured on the homepage', type: 'toggle' },
         { name: 'active', label: 'Shown on the website', type: 'toggle' },
         seoField,
+        guField([
+          { name: 'name', label: 'Product name', maxLength: 150 },
+          { name: 'summary', label: 'Short summary', type: 'textarea', rows: 2, maxLength: 400 },
+          { name: 'description', label: 'Description', type: 'textarea', rows: 5, maxLength: 5000 },
+          { name: 'highlights', label: 'Key features', type: 'list' },
+          { name: 'specifications', label: 'Specifications', type: 'specs' },
+          { name: 'seo', label: 'SEO', type: 'seo' },
+        ]),
       ]}
       defaults={{ kind: 'system', active: true }}
-      toPayload={(v) => ({ ...v, ...('brand' in v ? { brand: v.brand || null } : {}) })}
+      toPayload={(v) => ({ ...withGu(v), ...('brand' in v ? { brand: v.brand || null } : {}), ...('pricing' in v ? { pricing: pricingPayload(v.pricing) } : {}) })}
       extraHint="Save the product first, then add its images."
       extra={(record, setRecord) => <ProductImages product={record} onSaved={setRecord} />}
     />
@@ -124,8 +152,14 @@ export function CategoryForm() {
         sortField,
         { name: 'description', label: 'Description', type: 'textarea', rows: 2 },
         { name: 'active', label: 'Shown on the website', type: 'toggle' },
+        guField([
+          { name: 'name', label: 'Category name', maxLength: 100 },
+          { name: 'shortName', label: 'Short name', maxLength: 40 },
+          { name: 'description', label: 'Description', type: 'textarea', rows: 2, maxLength: 1000 },
+        ]),
       ]}
       defaults={{ active: true }}
+      toPayload={withGu}
     />
   )
 }
@@ -231,8 +265,15 @@ export function ServiceForm() {
         { name: 'details', label: 'What is included', type: 'list' },
         { name: 'active', label: 'Shown on the website', type: 'toggle', hint: 'Keep unconfirmed services hidden.' },
         seoField,
+        guField([
+          { name: 'title', label: 'Service name', maxLength: 100 },
+          { name: 'summary', label: 'Summary', type: 'textarea', rows: 2, maxLength: 400 },
+          { name: 'details', label: 'What is included', type: 'list' },
+          { name: 'seo', label: 'SEO', type: 'seo' },
+        ]),
       ]}
       defaults={{ status: 'to-be-confirmed', active: false }}
+      toPayload={withGu}
       extraHint="Save the service first, then add an image."
       extra={(record, setRecord) => <ImageField label="Service image" image={record.image} uploadPath={`/services/${record.id}/image`} removePath={`/services/${record.id}/image`} onSaved={setRecord} altDefault={record.title} />}
     />

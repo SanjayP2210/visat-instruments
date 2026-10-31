@@ -1,11 +1,29 @@
-import { ExternalLink, Star } from 'lucide-react'
-import { business } from '../../data/business'
+import { MessageSquarePlus, Star } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { useBusiness } from '../../context/SiteData'
+import { useT } from '../../i18n/LanguageContext'
 import RatingStars from './RatingStars'
 
-// Shows the verified Google rating summary. Individual review texts are not
-// reproduced here; visitors are linked to Google to read them first-hand.
+// Live summary of the approved, published website Customer Reviews (average and count
+// from the API). With no eligible reviews it shows an invitation instead of any rating.
 export default function ReviewsSummary() {
-  const { value, count, source } = business.rating
+  const business = useBusiness()
+  const t = useT()
+  if (!business.rating) {
+    return (
+      <div className="card flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div>
+          <p className="font-display text-lg font-bold text-navy-900">{t('rating.empty')}</p>
+          <p className="mt-1 text-sm text-steel-500">{t('rating.emptyText')}</p>
+        </div>
+        <Link to="/reviews#write" className="btn-outline shrink-0">
+          <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
+          {t('reviews.write')}
+        </Link>
+      </div>
+    )
+  }
+  const { value, count } = business.rating
   return (
     <div className="card grid gap-8 overflow-hidden p-6 sm:p-10 md:grid-cols-[auto_1fr] md:items-center">
       <div className="flex items-center gap-5">
@@ -15,21 +33,15 @@ export default function ReviewsSummary() {
         </div>
         <div>
           <RatingStars value={value} className="h-5 w-5" />
-          <p className="mt-2 text-sm font-semibold text-navy-900">
-            {count} reviews on {source}
-          </p>
-          <p className="text-xs text-steel-500">Rating as listed on {source}</p>
+          <p className="mt-2 text-sm font-semibold text-navy-900">{t('rating.countOn', { count })}</p>
+          <p className="text-xs text-steel-500">{t('rating.asListed')}</p>
         </div>
       </div>
       <div className="md:border-l md:border-steel-200 md:pl-8">
         <p className="text-lg leading-relaxed text-navy-800">
-          Customers have rated {business.name} <strong>{value.toFixed(1)} out of 5</strong> on {source}. Read their
-          reviews first-hand, or leave your own after working with us.
+          {t('rating.summaryBefore', { name: business.name })} <strong>{t('rating.outOf5', { value: value.toFixed(1) })}</strong>{' '}
+          {t('rating.summaryAfter')}
         </p>
-        <a href={business.maps.view} target="_blank" rel="noopener noreferrer" className="btn-outline mt-5">
-          Read reviews on Google
-          <ExternalLink className="h-4 w-4" aria-hidden="true" />
-        </a>
       </div>
     </div>
   )

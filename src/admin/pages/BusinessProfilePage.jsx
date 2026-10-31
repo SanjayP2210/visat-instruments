@@ -1,10 +1,12 @@
 import { Loader2, Plus, Save, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import GujaratiFields, { cleanGu } from '../components/GujaratiFields'
 import ImageField from '../components/ImageField'
 import { useOptions } from '../components/Resource'
 import { useToast } from '../components/Toast'
 import { ErrorState, PageHeader, Select, Spinner, StringList, TextArea, TextInput, Toggle } from '../components/ui'
+import { isSocialUrl, SOCIAL_PLATFORMS } from '../../utils/social'
 
 // Editable shape of the profile (only fields the API accepts).
 const toForm = (p) => ({
@@ -18,9 +20,13 @@ const toForm = (p) => ({
   primaryBrand: p.primaryBrand?.id ?? p.primaryBrand ?? '',
   contactNumbers: (p.contactNumbers ?? []).map(({ id, label, person, displayNumber, dialNumber, isWhatsApp, isPrimary }) => ({ id, label: label ?? '', person: person ?? '', displayNumber, dialNumber, isWhatsApp: Boolean(isWhatsApp), isPrimary: Boolean(isPrimary) })),
   address: { lines: p.address?.lines ?? [], city: p.address?.city ?? '', state: p.address?.state ?? '', pincode: p.address?.pincode ?? '', country: p.address?.country ?? '' },
-  owners: (p.owners ?? []).map(({ id, name, role, intro, phone, whatsappNumber, sortOrder }) => ({ id, name, role: role ?? '', intro: intro ?? '', phone: { display: phone?.display ?? '', tel: phone?.tel ?? '' }, whatsappNumber: whatsappNumber ?? '', sortOrder: sortOrder ?? 0 })),
-  socialLinks: p.socialLinks ?? [],
-  rating: { value: p.rating?.value ?? '', count: p.rating?.count ?? '', source: p.rating?.source ?? '' },
+  owners: (p.owners ?? []).map(({ id, name, role, intro, phone, whatsappNumber, sortOrder, gu }) => ({ id, name, role: role ?? '', intro: intro ?? '', phone: { display: phone?.display ?? '', tel: phone?.tel ?? '' }, whatsappNumber: whatsappNumber ?? '', sortOrder: sortOrder ?? 0, gu: gu ?? {} })),
+  gu: p.gu ?? {}, // Gujarati version of the text fields
+  // One row per supported platform, in a fixed order.
+  socialLinks: SOCIAL_PLATFORMS.map(({ id }) => {
+    const saved = (p.socialLinks ?? []).find((s) => String(s.platform).toLowerCase() === id)
+    return { platform: id, url: saved?.url ?? '', enabled: Boolean(saved?.url) && saved?.enabled !== false }
+  }),
 })
 
 const toPayload = (form, initial) => {
@@ -29,8 +35,9 @@ const toPayload = (form, initial) => {
     if (JSON.stringify(form[key]) === JSON.stringify(initial[key])) continue
     let v = form[key]
     if (key === 'primaryBrand') v = v || null
-    if (key === 'rating') v = { ...(v.value !== '' ? { value: Number(v.value) } : {}), ...(v.count !== '' ? { count: Number(v.count) } : {}), source: v.source }
     if (key === 'contactNumbers' || key === 'owners') v = v.map(({ id, ...rest }) => (id ? { id, ...rest } : rest))
+    if (key === 'owners') v = v.map((o) => ({ ...o, gu: cleanGu(o.gu) }))
+    if (key === 'gu') v = cleanGu(v)
     out[key] = v
   }
   return out
@@ -116,6 +123,21 @@ export default function BusinessProfilePage() {
           <Select id="bp-brand" label="Primary brand" value={form.primaryBrand} onChange={(v) => set('primaryBrand', v)} options={brands} placeholder="None" />
           <TextInput id="bp-maps" label="Google Maps link" value={form.mapsUrl} onChange={(v) => set('mapsUrl', v)} error={err('mapsUrl')} />
           <TextArea id="bp-desc" label="Description" value={form.description} onChange={(v) => set('description', v)} rows={4} className="sm:col-span-2" />
+          <GujaratiFields
+            id="bp"
+            fields={[
+              { name: 'name', label: 'Business name', maxLength: 120 },
+              { name: 'type', label: 'Business type', maxLength: 120 },
+              { name: 'tagline', label: 'Tagline', maxLength: 200 },
+              { name: 'contactPerson', label: 'Contact person', maxLength: 100 },
+              { name: 'description', label: 'Description', type: 'textarea', rows: 4, maxLength: 5000 },
+              { name: 'addressLines', label: 'Address lines', type: 'list' },
+            ]}
+            english={{ ...form, addressLines: form.address.lines }}
+            value={form.gu}
+            onChange={(v) => set('gu', v)}
+            errorFor={err}
+          />
         </div>
       </Section>
 
@@ -172,6 +194,7 @@ export default function BusinessProfilePage() {
                   <TextInput id={`ow-${i}-wa`} label="WhatsApp number (digits)" value={o.whatsappNumber} onChange={(v) => setIn('owners', i, { whatsappNumber: v })} error={err(`owners.${i}.whatsappNumber`)} />
                   <TextInput id={`ow-${i}-order`} label="Display order" type="number" value={o.sortOrder} onChange={(v) => setIn('owners', i, { sortOrder: v === '' ? 0 : v })} />
                   <TextArea id={`ow-${i}-intro`} label="Introduction" value={o.intro} onChange={(v) => setIn('owners', i, { intro: v })} rows={2} className="sm:col-span-2" />
+                  <GujaratiFields id={`ow-${i}`} fields={[{ name: 'name', label: 'Name', maxLength: 100 }, { name: 'role', label: 'Role', maxLength: 60 }, { name: 'intro', label: 'Introduction', type: 'textarea', rows: 2, maxLength: 1000 }]} english={o} value={o.gu ?? {}} onChange={(v) => setIn('owners', i, { gu: v })} />
                 </div>
                 {saved ? (
                   <ImageField label="Photo" image={saved.photo} uploadPath={`/business-profile/owners/${saved.id}/photo`} removePath={saved.photo?.publicId ? `/business-profile/owners/${saved.id}/photo` : undefined} altDefault={`Portrait of ${saved.name}`} onSaved={apply} hint="Use an original photo of the owner." />
@@ -190,27 +213,31 @@ export default function BusinessProfilePage() {
         </button>
       </Section>
 
-      <Section title="Social links and rating">
-        <ul className="space-y-2">
-          {form.socialLinks.map((s, i) => (
-            <li key={i} className="grid grid-cols-[10rem_1fr_auto] gap-2">
-              <input aria-label={`Social link ${i + 1} platform`} className="field-input" placeholder="e.g. Facebook" value={s.platform} onChange={(e) => setIn('socialLinks', i, { platform: e.target.value })} />
-              <input aria-label={`Social link ${i + 1} URL`} className="field-input" placeholder="https://…" value={s.url} onChange={(e) => setIn('socialLinks', i, { url: e.target.value })} />
-              <button type="button" onClick={() => set('socialLinks', form.socialLinks.filter((_, j) => j !== i))} className="btn-outline px-3 text-red-700" aria-label={`Remove social link ${i + 1}`}>
-                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-            </li>
-          ))}
+      <Section title="Social media"description="Icons appear in the website footer and on the Contact page only when the link is filled in and switched on.">
+        <ul className="space-y-4">
+          {form.socialLinks.map((s, i) => {
+            const { name } = SOCIAL_PLATFORMS[i]
+            const invalid = s.url.trim() !== '' && !isSocialUrl(s.platform, s.url.trim())
+            return (
+              <li key={s.platform} className="grid items-start gap-3 sm:grid-cols-[1fr_auto]">
+                <TextInput
+                  id={`bp-social-${s.platform}`}
+                  label={`${name} profile URL`}
+                  type="url"
+                  value={s.url}
+                  onChange={(v) => setIn('socialLinks', i, { url: v })}
+                  placeholder="https://"
+                  error={err(`socialLinks.${i}.url`) ?? (invalid ? `Enter the full https:// link to the ${name} page.` : undefined)}
+                  hint="Leave empty if there is no page."
+                />
+                <div className="sm:pt-7">
+                  <Toggle id={`bp-social-${s.platform}-on`} label={`Show ${name}`} checked={s.enabled} onChange={(v) => setIn('socialLinks', i, { enabled: v })} />
+                </div>
+              </li>
+            )
+          })}
         </ul>
-        {err('socialLinks') && <p className="text-sm text-red-600">{err('socialLinks')}</p>}
-        <button type="button" onClick={() => set('socialLinks', [...form.socialLinks, { platform: '', url: '' }])} className="btn-outline px-3 py-2 text-xs">
-          <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Add social link
-        </button>
-        <div className="grid gap-4 border-t border-steel-200 pt-4 sm:grid-cols-3">
-          <TextInput id="bp-rating" label="Rating (0–5)" type="number" value={form.rating.value} onChange={(v) => set('rating', { ...form.rating, value: v })} step="0.1" min="0" max="5" />
-          <TextInput id="bp-count" label="Number of reviews" type="number" value={form.rating.count} onChange={(v) => set('rating', { ...form.rating, count: v })} min="0" />
-          <TextInput id="bp-source" label="Source" value={form.rating.source} onChange={(v) => set('rating', { ...form.rating, source: v })} hint="e.g. Google" />
-        </div>
+        {fieldErrors.socialLinks && <p className="text-sm text-red-600">{fieldErrors.socialLinks}</p>}
       </Section>
     </form>
   )

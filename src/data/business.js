@@ -35,9 +35,6 @@ export const business = {
     directions: `https://www.google.com/maps/dir/?api=1&destination=${mapsQuery}`,
     embed: `https://www.google.com/maps?q=${mapsQuery}&output=embed`,
   },
-  rating: {
-    value: 5.0,
-    count: 13,
-    source: 'Google',
-  },
+  // No `rating` here: review stats come only from live, approved website reviews (GET /api/public/site).
+  rating: null,
 }

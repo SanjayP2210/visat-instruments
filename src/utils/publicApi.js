@@ -33,4 +33,5 @@ async function call(method, path, body) {
 export const publicApi = {
   site: () => call('GET', '/public/site'),
   submitReview: (review) => call('POST', '/public/reviews', review),
+  submitEnquiry: (enquiry) => call('POST', '/public/enquiries', enquiry),
 }

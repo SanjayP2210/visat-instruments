@@ -1,12 +1,17 @@
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useSite } from '../../context/SiteData'
+import { useT } from '../../i18n/LanguageContext'
 import { getCategoryById } from '../../services/catalogService'
 import { productEnquiryMessage, whatsappLink } from '../../utils/whatsapp'
 import WhatsAppIcon from '../common/WhatsAppIcon'
+import { PriceLine } from './PriceTag'
 import ProductImage from './ProductImage'
 
 export default function ProductCard({ product }) {
-  const category = getCategoryById(product.categoryId)
+  const site = useSite()
+  const t = useT()
+  const category = getCategoryById(site, product.categoryId)
   const detailUrl = `/products/${product.slug}`
 
   return (
@@ -20,30 +25,47 @@ export default function ProductCard({ product }) {
         )}
       </Link>
       <div className="flex flex-1 flex-col p-5">
+        {product.brand && <p className="text-xs font-bold tracking-widest text-accent-600 uppercase">{product.brand.name}</p>}
         <h3 className="text-xl font-bold">
           <Link to={detailUrl} className="hover:text-accent-600">
             {product.name}
           </Link>
         </h3>
         <p className="mt-2 flex-1 text-sm leading-relaxed text-steel-600">{product.summary}</p>
-        <p className="mt-4 text-xs font-semibold text-steel-500">Specifications &amp; price: on enquiry</p>
+        <div className="mt-4">
+          <PriceLine pricing={product.pricing} />
+        </div>
         <div className="mt-4 grid grid-cols-2 gap-2 border-t border-steel-200 pt-4">
           <Link to={detailUrl} className="btn-outline px-3 py-2.5 text-xs">
-            View details
+            {t('products.viewDetails')}
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
           <a
-            href={whatsappLink(productEnquiryMessage(product, category?.name))}
+            href={whatsappLink(productEnquiryMessage(product, category?.name, site.business, t), site.business)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-whatsapp px-3 py-2.5 text-xs"
-            aria-label={`Enquire about ${product.name} on WhatsApp`}
+            aria-label={t('products.enquireWhatsApp', { name: product.name })}
           >
             <WhatsAppIcon className="h-3.5 w-3.5" />
-            Enquire
+            {t('cta.enquire')}
           </a>
         </div>
       </div>
     </article>
+  )
+}
+
+export function ProductCardSkeleton() {
+  return (
+    <div className="card overflow-hidden" aria-hidden="true">
+      <div className="aspect-[4/3] animate-pulse bg-navy-50" />
+      <div className="space-y-3 p-5">
+        <div className="h-5 w-2/3 animate-pulse rounded bg-navy-50" />
+        <div className="h-3 w-full animate-pulse rounded bg-navy-50" />
+        <div className="h-3 w-4/5 animate-pulse rounded bg-navy-50" />
+        <div className="h-9 w-full animate-pulse rounded bg-navy-50" />
+      </div>
+    </div>
   )
 }

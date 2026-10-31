@@ -1,36 +1,40 @@
-// Data-access layer for the catalogue. UI components call these functions
-// instead of importing data files directly, so Phase 2 only needs to swap
-// these implementations for REST calls (e.g. GET /api/products).
-import { categories, products } from '../data/products'
+// Catalogue queries over the site data from useSite() (live API data, or the built-in
+// fallback when the API is unreachable). Components never import the data files directly.
+const byOrder = (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
 
-const byOrder = (a, b) => a.sortOrder - b.sortOrder
-
-export function getCategories() {
-  return [...categories].sort(byOrder)
+export function getCategories(site) {
+  return [...site.categories].sort(byOrder)
 }
 
-export function getCategoryById(id) {
-  return categories.find((c) => c.id === id) ?? null
+export function getCategoryById(site, id) {
+  return site.categories.find((c) => c.id === id) ?? null
 }
 
-export function getCategoryBySlug(slug) {
-  return categories.find((c) => c.slug === slug) ?? null
+export function getCategoryBySlug(site, slug) {
+  return site.categories.find((c) => c.slug === slug) ?? null
 }
 
-export function getProducts({ categorySlug } = {}) {
-  if (!categorySlug) return products
-  const category = getCategoryBySlug(categorySlug)
-  return category ? products.filter((p) => p.categoryId === category.id) : []
+export function getProducts(site, { categorySlug, query } = {}) {
+  let list = site.products
+  if (categorySlug) {
+    const category = getCategoryBySlug(site, categorySlug)
+    list = category ? list.filter((p) => p.categoryId === category.id) : []
+  }
+  const q = query?.trim().toLowerCase()
+  if (q) list = list.filter((p) => [p.name, p.summary, p.brand?.name].some((v) => v?.toLowerCase().includes(q)))
+  return list
 }
 
-export function getFeaturedProducts() {
-  return products.filter((p) => p.featured)
+export function getFeaturedProducts(site) {
+  return site.products.filter((p) => p.featured)
 }
 
-export function getProductBySlug(slug) {
-  return products.find((p) => p.slug === slug) ?? null
+export function getProductBySlug(site, slug) {
+  return site.products.find((p) => p.slug === slug) ?? null
 }
 
-export function getRelatedProducts(product, limit = 3) {
-  return products.filter((p) => p.id !== product.id).slice(0, limit)
+export function getRelatedProducts(site, product, limit = 3) {
+  const others = site.products.filter((p) => p.id !== product.id)
+  const same = others.filter((p) => p.categoryId === product.categoryId)
+  return [...same, ...others.filter((p) => p.categoryId !== product.categoryId)].slice(0, limit)
 }

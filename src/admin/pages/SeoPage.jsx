@@ -1,6 +1,7 @@
 import { Pencil } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import GujaratiFields, { cleanGu } from '../components/GujaratiFields'
 import ImageField, { ImagePreview } from '../components/ImageField'
 import { useToast } from '../components/Toast'
 import { ErrorState, Modal, PageHeader, Spinner, StringList, TextArea, TextInput } from '../components/ui'
@@ -19,13 +20,14 @@ function EditSeo({ page, current, onClose, onSaved }) {
   const toast = useToast()
   const [form, setForm] = useState({ title: current?.title ?? '', description: current?.description ?? '', keywords: current?.keywords ?? [] })
   const [record, setRecord] = useState(current)
+  const [gu, setGu] = useState(current?.gu ?? {}) // Gujarati title/description
   const [errors, setErrors] = useState({})
   const [busy, setBusy] = useState(false)
   const close = () => (record !== current ? onSaved() : onClose()) // refresh if the image changed
   const save = async () => {
     setBusy(true)
     try {
-      await api.put(`/seo/${page.page}`, { ...form, keywords: form.keywords.filter((k) => k.trim()) })
+      await api.put(`/seo/${page.page}`, { ...form, keywords: form.keywords.filter((k) => k.trim()), gu: cleanGu(gu) })
       toast.success(`SEO for ${page.label} saved.`)
       onSaved()
     } catch (err) {
@@ -41,6 +43,7 @@ function EditSeo({ page, current, onClose, onSaved }) {
         <TextInput id="seo-title" label="Meta title" value={form.title} onChange={(v) => setForm((f) => ({ ...f, title: v }))} maxLength={70} hint={`${form.title.length}/70 characters`} error={errors.title} />
         <TextArea id="seo-desc" label="Meta description" value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} maxLength={170} rows={3} hint={`${form.description.length}/170 characters`} error={errors.description} />
         <StringList id="seo-keywords" label="Keywords" value={form.keywords} onChange={(v) => setForm((f) => ({ ...f, keywords: v }))} placeholder="e.g. weighbridge Ahmedabad" />
+        <GujaratiFields id="seo" fields={[{ name: 'title', label: 'Meta title', maxLength: 70 }, { name: 'description', label: 'Meta description', type: 'textarea', rows: 3, maxLength: 170 }]} english={form} value={gu} onChange={setGu} errorFor={(p) => errors[p]} />
         <ImageField label="Social-sharing image" image={record?.ogImage} uploadPath={`/seo/${page.page}/image`} removePath={`/seo/${page.page}/image`} onSaved={setRecord} altDefault={`${page.label} page`} hint="Shown when the page is shared (about 1200×630 px works best)." />
       </div>
     </Modal>

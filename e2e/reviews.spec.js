@@ -53,6 +53,13 @@ test('a customer review is moderated before it appears on the website', async ({
   await expect(card).toContainText('Installation')
   await expect(card.getByLabel('4 out of 5 stars')).toBeVisible()
 
+  // 4b. The live rating and review count on the home page scroll to "What our customers say".
+  for (const name of ['Customer rating', 'Customer Reviews']) {
+    await page.goto('/')
+    await page.getByRole('link', { name, exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'What our customers say' })).toBeInViewport()
+  }
+
   // 5. Rejecting hides it again.
   await page.goto('/admin/reviews')
   await page.getByRole('row', { name: /E2E Reviewer/ }).getByRole('button', { name: 'Reject review by E2E Reviewer' }).click()

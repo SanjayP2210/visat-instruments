@@ -1,8 +1,11 @@
+import { useT } from '../../i18n/LanguageContext'
+
 export default function CategoryFilter({ categories, active, counts, onChange }) {
-  const options = [{ slug: '', name: 'All Products' }, ...categories]
+  const t = useT()
+  const options = [{ slug: '', name: t('products.all') }, ...categories]
 
   return (
-    <div role="group" aria-label="Filter products by category" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+    <div role="group" aria-label={t('products.filter')} className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
       <div className="flex w-max gap-2 pb-1 sm:w-auto sm:flex-wrap">
         {options.map((option) => {
           const isActive = active === option.slug

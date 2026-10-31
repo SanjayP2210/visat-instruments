@@ -1,7 +1,7 @@
 // Business profile, website content sections, SEO settings, the public website bundle
 // and public enquiries. Pure business logic: no Express, no Vercel.
 import { Brand } from '../models/Brand.js'
-import { BusinessProfile } from '../models/BusinessProfile.js'
+import { BusinessProfile, SOCIAL_PLATFORMS } from '../models/BusinessProfile.js'
 import { Category, GalleryItem, Product, Service } from '../models/catalog.js'
 import { SiteAsset } from '../models/media.js'
 import { Enquiry, SeoSetting, SiteContent, Testimonial } from '../models/site.js'
@@ -9,6 +9,34 @@ import { errors } from '../utils/http.js'
 import { assertExists } from './crudService.js'
 
 const INTERNAL_FIELDS = new Set(['createdBy', 'updatedBy', 'handledBy'])
+
+/** Average star rating and count of the published website reviews that have a rating; null when there are none. */
+export function reviewStats(reviews = []) {
+  const ratings = reviews.map((r) => r.rating).filter((n) => Number.isInteger(n) && n >= 1 && n <= 5)
+  if (!ratings.length) return null
+  const average = ratings.reduce((sum, n) => sum + n, 0) / ratings.length
+  return { average: Math.round(average * 10) / 10, count: ratings.length }
+}
+
+/**
+ * Website view of a product's pricing. "Request quote" (or a priced type without a selling
+ * price) never exposes any amount; the discount is derived from the owner-entered prices only.
+ */
+export function publicPricing(pricing = {}) {
+  const base = { gst: pricing.gst ?? 'not-specified', additionalCharges: pricing.additionalCharges ?? '', availability: pricing.availability ?? 'not-specified' }
+  const selling = pricing.sellingPrice
+  if (!pricing.type || pricing.type === 'request-quote' || selling == null) return { type: 'request-quote', ...base }
+  const original = pricing.originalPrice != null && pricing.originalPrice > selling ? pricing.originalPrice : null
+  return {
+    type: pricing.type,
+    sellingPrice: selling,
+    originalPrice: original,
+    discountAmount: original ? original - selling : 0,
+    discountPercent: original ? Math.round(((original - selling) / original) * 100) : 0,
+    ...base,
+    gstRate: base.gst === 'not-specified' ? null : (pricing.gstRate ?? null),
+  }
+}
 
 export function createSiteServices(media) {
   async function getProfile() {
@@ -86,12 +114,14 @@ export function createSiteServices(media) {
         return section
       },
 
-      async upsert(key, { data, published }, actor) {
+      async upsert(key, { data, gu, published }, actor) {
         const section = (await SiteContent.findOne({ key })) ?? new SiteContent({ key })
         if (data !== undefined) section.data = data
+        if (gu !== undefined) section.gu = gu
         if (published !== undefined) section.published = published
         section.updatedBy = actor._id
         section.markModified('data')
+        section.markModified('gu')
         return section.save()
       },
     },
@@ -168,16 +198,23 @@ export function createSiteServices(media) {
       const assetsBySlot = {}
       for (const asset of assets) (assetsBySlot[asset.slot] ??= []).push(asset)
 
+      // Only social links that are switched on and filled in are public.
+      // The old hand-entered `rating` is never public: the site shows live stats from its own reviews.
+      const business = profile && { ...profile.toJSON(), rating: undefined, socialLinks: profile.socialLinks.filter((s) => s.enabled && s.url && SOCIAL_PLATFORMS.includes(s.platform)).map(({ platform, url }) => ({ platform, url })) }
       const bundle = {
-        business: profile,
+        business,
         brands,
         categories,
-        products: products.filter((p) => p.category && activeCategoryIds.has(String(p.category._id))),
+        products: products
+          .filter((p) => p.category && activeCategoryIds.has(String(p.category._id)))
+          .map((p) => ({ ...p.toJSON(), pricing: publicPricing(p.pricing) })),
         services,
         gallery,
+        reviewStats: reviewStats(testimonials), // same approved + published + consented reviews as below
         testimonials: testimonials.map(({ name, company, location, serviceReceived, message, rating, source, sourceUrl, id, createdAt }) => ({ id, name, company, location, serviceReceived, message, rating, source, sourceUrl, createdAt })),
         content: Object.fromEntries(sections.map((s) => [s.key, s.data])),
-        seo: Object.fromEntries(seo.map((s) => [s.page, { title: s.title, description: s.description, keywords: s.keywords, ogImage: s.ogImage ?? null }])),
+        contentGu: Object.fromEntries(sections.filter((s) => s.gu && Object.keys(s.gu).length).map((s) => [s.key, s.gu])), // Gujarati versions
+        seo: Object.fromEntries(seo.map((s) => [s.page, { title: s.title, description: s.description, keywords: s.keywords, ogImage: s.ogImage ?? null, gu: s.gu ?? {} }])),
         assets: assetsBySlot,
       }
       // Plain JSON without internal audit fields (admin user IDs are not public).

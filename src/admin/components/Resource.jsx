@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { useList } from '../hooks/useList'
+import GujaratiFields from './GujaratiFields'
 import { DataTable, ListToolbar, Pagination } from './ListView'
 import { useToast } from './Toast'
 import { ConfirmDialog, ErrorState, Field, PageHeader, Select, Spinner, StringList, TextArea, TextInput, Toggle } from './ui'
@@ -126,7 +127,46 @@ function SeoEditor({ id, value = {}, onChange, errorFor }) {
   )
 }
 
-function FieldInput({ field, value, onChange, error, errorFor, disabled }) {
+const PRICING_TYPES = [
+  { value: 'request-quote', label: 'Request quote (no price shown)' },
+  { value: 'fixed', label: 'Fixed price' },
+  { value: 'starting-from', label: 'Starting from' },
+]
+const GST_MODES = [
+  { value: 'not-specified', label: 'Not specified' },
+  { value: 'inclusive', label: 'Inclusive of GST' },
+  { value: 'exclusive', label: 'Plus GST (exclusive)' },
+]
+const AVAILABILITY = [
+  { value: 'not-specified', label: 'Not specified' },
+  { value: 'in-stock', label: 'In stock' },
+  { value: 'made-to-order', label: 'Made to order' },
+  { value: 'out-of-stock', label: 'Out of stock' },
+]
+
+function PricingEditor({ id, value = {}, onChange, errorFor }) {
+  const set = (k, v) => onChange({ ...value, [k]: v })
+  const priced = value.type && value.type !== 'request-quote'
+  const discount = priced && value.originalPrice > value.sellingPrice ? value.originalPrice - value.sellingPrice : 0
+  return (
+    <fieldset className="grid gap-4 rounded-xl border border-steel-200 p-4 sm:col-span-2 sm:grid-cols-2">
+      <legend className="px-1 text-sm font-bold text-navy-900">Pricing</legend>
+      <Select id={`${id}-type`} label="Pricing type" value={value.type ?? 'request-quote'} onChange={(v) => set('type', v)} options={PRICING_TYPES} hint="Only enter prices you have confirmed. “Request quote” never shows a price." />
+      <Select id={`${id}-availability`} label="Availability" value={value.availability ?? 'not-specified'} onChange={(v) => set('availability', v)} options={AVAILABILITY} />
+      {priced && (
+        <>
+          <TextInput id={`${id}-selling`} label="Selling price (₹)" type="number" min={0} step="any" required value={value.sellingPrice} onChange={(v) => set('sellingPrice', v)} error={errorFor('pricing.sellingPrice')} />
+          <TextInput id={`${id}-original`} label="Original price / MRP (₹)" type="number" min={0} step="any" value={value.originalPrice} onChange={(v) => set('originalPrice', v)} error={errorFor('pricing.originalPrice')} hint={discount ? `Discount shown: ₹${discount.toLocaleString('en-IN')} (${Math.round((discount / value.originalPrice) * 100)}%)` : 'Optional. Leave empty for no discount.'} />
+          <Select id={`${id}-gst`} label="GST" value={value.gst ?? 'not-specified'} onChange={(v) => set('gst', v)} options={GST_MODES} />
+          <TextInput id={`${id}-gst-rate`} label="GST rate (%)" type="number" min={0} max={28} step="any" value={value.gstRate} onChange={(v) => set('gstRate', v)} error={errorFor('pricing.gstRate')} hint="Optional." />
+          <TextInput id={`${id}-charges`} label="Additional charges" className="sm:col-span-2" value={value.additionalCharges} onChange={(v) => set('additionalCharges', v)} maxLength={200} placeholder="e.g. Transport and installation charged extra" />
+        </>
+      )}
+    </fieldset>
+  )
+}
+
+function FieldInput({ field, value, onChange, error, errorFor, disabled, values }) {
   const id = `f-${field.name}`
   const common = { id, label: field.label, required: field.required, hint: field.hint, error, disabled }
   switch (field.type) {
@@ -142,6 +182,10 @@ function FieldInput({ field, value, onChange, error, errorFor, disabled }) {
       return <SpecsEditor id={id} value={value ?? []} onChange={onChange} error={error} />
     case 'seo':
       return <SeoEditor id={id} value={value ?? {}} onChange={onChange} errorFor={errorFor} />
+    case 'gu':
+      return <GujaratiFields id={id} fields={field.fields} english={values} value={value ?? {}} onChange={onChange} errorFor={errorFor} />
+    case 'pricing':
+      return <PricingEditor id={id} value={value ?? {}} onChange={onChange} errorFor={errorFor} />
     default:
       return <TextInput {...common} type={field.type ?? 'text'} value={value} onChange={onChange} maxLength={field.maxLength} autoComplete={field.autoComplete} />
   }
@@ -267,8 +311,8 @@ export function ResourceForm({ title, apiPath, basePath, fields, defaults = {}, 
       <form onSubmit={submit} noValidate className="card space-y-6 p-5 sm:p-6">
         <fieldset disabled={readOnly || saving} className="grid gap-5 sm:grid-cols-2">
           {visible.map((field) => (
-            <div key={field.name} className={field.wide || ['textarea', 'list', 'specs', 'seo'].includes(field.type) ? 'sm:col-span-2' : ''}>
-              <FieldInput field={field} value={values[field.name]} onChange={(v) => set(field.name, v)} error={errorFor(field.name)} errorFor={errorFor} />
+            <div key={field.name} className={field.wide || ['textarea', 'list', 'specs', 'seo', 'gu', 'pricing'].includes(field.type) ? 'sm:col-span-2' : ''}>
+              <FieldInput field={field} value={values[field.name]} values={values} onChange={(v) => set(field.name, v)} error={errorFor(field.name)} errorFor={errorFor} />
             </div>
           ))}
         </fieldset>

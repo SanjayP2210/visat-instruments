@@ -3,6 +3,7 @@ import { ROLES, User } from '../models/User.js'
 import { errors } from '../utils/http.js'
 import { paginate } from '../utils/listQuery.js'
 import { revokeUserSessions } from './authService.js'
+import { changesOf, valuesOf } from './logService.js'
 import { hashPassword } from './passwordService.js'
 
 export function listUsers(query) {
@@ -40,10 +41,12 @@ export async function updateUser(id, changes, actor) {
   }
 
   const permissionsChanged = (changes.role && changes.role !== user.role) || changes.active === false
+  const before = valuesOf(user)
   Object.assign(user, changes)
+  const changed = changesOf(user, before) // for the admin activity log
   await user.save()
   if (permissionsChanged) await revokeUserSessions(user._id) // take effect immediately
-  return user
+  return { user, changes: changed }
 }
 
 export async function resetUserPassword(id, password, config) {
@@ -61,4 +64,5 @@ export async function deleteUser(id, actor) {
   if (user.role === ROLES.ADMIN && user.active) await assertAnotherActiveAdmin(user._id)
   await revokeUserSessions(user._id)
   await user.deleteOne()
+  return user
 }

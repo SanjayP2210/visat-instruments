@@ -1,17 +1,22 @@
-import { business } from '../data/business'
+import { business as builtInBusiness } from '../data/business'
+import { translate } from '../i18n/LanguageContext'
 
-export function whatsappLink(message) {
-  if (!message) return business.whatsapp.url
-  return `${business.whatsapp.url}?text=${encodeURIComponent(message)}`
+const english = (key, vars) => translate('en', key, vars)
+
+// `biz` is the live business profile from useBusiness(); the built-in one is the fallback.
+// `t` is the current-language translator from useT(); messages default to English.
+export function whatsappLink(message, biz = builtInBusiness) {
+  if (!message) return biz.whatsapp.url
+  return `${biz.whatsapp.url}?text=${encodeURIComponent(message)}`
 }
 
-export function productEnquiryMessage(product, categoryName) {
-  const lines = [
-    `Hello ${business.name},`,
-    `I would like to enquire about: ${product.name}${categoryName ? ` (${categoryName})` : ''}.`,
-    'Please share details on availability, specifications and price.',
-  ]
-  return lines.join('\n')
+export function productEnquiryMessage(product, categoryName, biz = builtInBusiness, t = english) {
+  return [
+    t('wa.hello', { name: biz.name }),
+    t('wa.product', { product: `${product.name}${categoryName ? ` (${categoryName})` : ''}` }),
+    t('wa.productAsk'),
+  ].join('\n')
 }
 
-export const generalEnquiryMessage = `Hello ${business.name}, I would like to enquire about your weighing products and services.`
+export const generalEnquiryText = (biz = builtInBusiness, t = english) => t('wa.general', { name: biz.name })
+export const generalEnquiryMessage = generalEnquiryText()

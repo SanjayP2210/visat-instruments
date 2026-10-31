@@ -1,7 +1,7 @@
 // Requires MONGODB_URI_TEST (MongoDB Atlas test database). Skipped otherwise.
 // Seed, public website API, enquiries, permissions and content business rules.
 import { beforeAll, describe, expect, it } from 'vitest'
-import { BusinessProfile, Category, Product, Service, SiteContent } from '../../src/models/index.js'
+import { BusinessProfile, Category, Product, Service, SiteContent, Testimonial } from '../../src/models/index.js'
 import { seedContent } from '../../src/services/seedService.js'
 import { createFakeStorage } from '../fakeStorage.js'
 import { createApp, createUserRecord, dbSuite, hasTestDatabase, ORIGIN, request, signIn, testConfig, useTestDatabase } from '../helpers.js'
@@ -79,6 +79,44 @@ describe.skipIf(!hasTestDatabase)(dbSuite('content APIs (MongoDB Atlas test data
     expect(site.products.some((p) => p.slug === 'usb-keyboard')).toBe(false)
     expect(site.testimonials).toHaveLength(0)
     await Product.updateOne({ slug: 'usb-keyboard' }, { active: true })
+  })
+
+  it('stores Gujarati versions next to the English content and serves both publicly', async () => {
+    const product = await Product.findOne({ slug: 'printer' })
+    const res = await send(editor, 'patch', `/api/products/${product.id}`).send({ gu: { name: 'પ્રિન્ટર', summary: 'વજનકાંટા માટે પ્રિન્ટર' } })
+    expect(res.status).toBe(200)
+    expect(res.body.data.name).toBe('Printer') // English kept
+    expect(res.body.data.gu.name).toBe('પ્રિન્ટર')
+    await send(editor, 'put', '/api/seo/about').send({ gu: { title: 'અમારા વિશે | વિઝેટ' } }).expect(200)
+    await send(editor, 'put', '/api/content/weighbridge').send({ gu: { intro: 'ગુજરાતી પરિચય' } }).expect(200)
+
+    const site = (await request(app).get('/api/public/site')).body.data
+    expect(site.products.find((p) => p.slug === 'printer')).toMatchObject({ name: 'Printer', gu: { name: 'પ્રિન્ટર' } })
+    expect(site.seo.about.gu.title).toBe('અમારા વિશે | વિઝેટ')
+    expect(site.seo.about.title).not.toBe('અમારા વિશે | વિઝેટ')
+    expect(site.contentGu.weighbridge.intro).toBe('ગુજરાતી પરિચય')
+
+    await Product.updateOne({ slug: 'printer' }, { $unset: { gu: 1 } })
+  })
+
+  it('shows "Request quote" by default and owner-entered prices with a calculated discount', async () => {
+    const before = (await request(app).get('/api/public/site')).body.data
+    expect(before.products.every((p) => p.pricing.type === 'request-quote' && p.pricing.sellingPrice === undefined)).toBe(true)
+
+    const product = await Product.findOne({ slug: 'jumbo-display' })
+    const bad = await send(editor, 'patch', `/api/products/${product.id}`).send({ pricing: { type: 'fixed' } })
+    expect(bad.status).toBe(422)
+    const ok = await send(editor, 'patch', `/api/products/${product.id}`).send({ pricing: { type: 'fixed', originalPrice: 20000, sellingPrice: 15000, gst: 'exclusive', gstRate: 18, availability: 'in-stock' } })
+    expect(ok.status).toBe(200)
+
+    const site = (await request(app).get('/api/public/site')).body.data
+    expect(site.products.find((p) => p.slug === 'jumbo-display').pricing).toMatchObject({ type: 'fixed', sellingPrice: 15000, originalPrice: 20000, discountAmount: 5000, discountPercent: 25, gst: 'exclusive', gstRate: 18 })
+
+    // Switching back to "Request quote" hides the stored prices again.
+    await send(editor, 'patch', `/api/products/${product.id}`).send({ pricing: { type: 'request-quote', originalPrice: 20000, sellingPrice: 15000 } }).expect(200)
+    const after = (await request(app).get('/api/public/site')).body.data
+    expect(after.products.find((p) => p.slug === 'jumbo-display').pricing).not.toHaveProperty('sellingPrice')
+    await Product.updateOne({ slug: 'jumbo-display' }, { $unset: { pricing: 1 } })
   })
 
   /* ---------- public enquiries ---------- */
@@ -208,6 +246,24 @@ describe.skipIf(!hasTestDatabase)(dbSuite('content APIs (MongoDB Atlas test data
     await send(editor, 'patch', '/api/business-profile').send({ contactNumbers: [{ ...numbers[0], isPrimary: true }, { ...numbers[1], isPrimary: false }] }).expect(200)
   })
 
+  it('publishes only social links that are switched on and filled in', async () => {
+    const socialLinks = [
+      { platform: 'facebook', url: 'https://www.facebook.com/test-page', enabled: true },
+      { platform: 'instagram', url: 'https://www.instagram.com/test-page', enabled: false },
+      { platform: 'youtube', url: '', enabled: true },
+      { platform: 'linkedin', url: '', enabled: false },
+    ]
+    expect((await send(editor, 'patch', '/api/business-profile').send({ socialLinks: [{ platform: 'facebook', url: 'https://example.com/x', enabled: true }] })).status).toBe(422)
+    const res = await send(editor, 'patch', '/api/business-profile').send({ socialLinks })
+    expect(res.status).toBe(200)
+    expect(res.body.data.socialLinks).toEqual(socialLinks) // admin sees everything
+
+    const site = (await request(app).get('/api/public/site')).body.data
+    expect(site.business.socialLinks).toEqual([{ platform: 'facebook', url: 'https://www.facebook.com/test-page' }])
+    expect(site.business.contactNumbers.length).toBeGreaterThan(0) // rest of the profile unchanged
+    await send(editor, 'patch', '/api/business-profile').send({ socialLinks: [] }).expect(200)
+  })
+
   it('keeps owner photos when owner details are edited', async () => {
     const current = (await editor.agent.get('/api/business-profile')).body.data
     const owners = current.owners.map(({ id, name, role, intro }) => ({ id, name, role, intro: `${intro} ` }))
@@ -266,6 +322,38 @@ describe.skipIf(!hasTestDatabase)(dbSuite('content APIs (MongoDB Atlas test data
     expect(site.testimonials.some((t) => t.name === 'Kiran Shah')).toBe(false)
 
     expect((await send(editor, 'delete', url)).status).toBe(200)
+  })
+
+  it('serves live Customer Review stats from approved + published + consented rated reviews only', async () => {
+    await Testimonial.deleteMany({})
+    const stats = async () => (await request(app).get('/api/public/site')).body.data.reviewStats
+    expect(await stats()).toBeNull() // no eligible reviews: no rating at all
+    expect((await request(app).get('/api/public/site')).body.data.business.rating).toBeUndefined() // old manual rating never public
+
+    const eligible = { status: 'approved', published: true, consentConfirmed: true }
+    // Raw inserts (no hooks) so even inconsistent legacy records are covered.
+    await Testimonial.collection.insertMany([
+      { name: 'A', message: 'Counted review one.', rating: 5, ...eligible },
+      { name: 'B', message: 'Counted review two.', rating: 4, ...eligible },
+      { name: 'C', message: 'Counted review three.', rating: 4, ...eligible },
+      { name: 'No stars', message: 'Eligible but unrated.', ...eligible },
+      { name: 'Pending', message: 'Not moderated yet.', rating: 1, ...eligible, status: 'pending' },
+      { name: 'Rejected', message: 'Rejected by staff.', rating: 1, ...eligible, status: 'rejected' },
+      { name: 'Unpublished', message: 'Approved, not published.', rating: 1, ...eligible, published: false },
+      { name: 'No consent', message: 'No customer consent.', rating: 1, ...eligible, consentConfirmed: false },
+    ])
+    expect(await stats()).toEqual({ average: 4.3, count: 3 })
+
+    // Moderation changes are reflected straight away.
+    const a = await Testimonial.findOne({ name: 'A' })
+    expect((await send(editor, 'patch', `/api/testimonials/${a.id}`).send({ published: false })).status).toBe(200)
+    expect(await stats()).toEqual({ average: 4, count: 2 })
+    expect((await send(editor, 'patch', `/api/testimonials/${a.id}`).send({ published: true })).status).toBe(200)
+    expect(await stats()).toEqual({ average: 4.3, count: 3 })
+    expect((await send(editor, 'patch', `/api/testimonials/${a.id}`).send({ status: 'rejected' })).status).toBe(200)
+    expect(await stats()).toEqual({ average: 4, count: 2 })
+
+    await Testimonial.deleteMany({})
   })
 
   /* ---------- admin dashboard and list extras ---------- */

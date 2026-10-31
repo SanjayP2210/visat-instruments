@@ -29,6 +29,10 @@ export const seoSchema = new mongoose.Schema(
   { _id: false },
 )
 
+// Gujarati version of a record's text fields (same keys as the English fields, all optional).
+// English fields are never replaced; the website falls back to English for anything empty.
+export const localizedField = { type: mongoose.Schema.Types.Mixed, default: () => ({}) }
+
 export const slugField = {
   type: String,
   required: true,

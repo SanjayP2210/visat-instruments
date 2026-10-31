@@ -13,6 +13,7 @@ const MAX_PRODUCT_IMAGES = 12
 export function createContentServices(media) {
   const categories = createCrudService(Category, {
     label: 'Category',
+    audit: { entity: 'category' },
     searchFields: ['name', 'slug', 'description'],
     filterFields: ['active'],
     async decorateList(items) {
@@ -28,6 +29,7 @@ export function createContentServices(media) {
 
   const brands = createCrudService(Brand, {
     label: 'Brand',
+    audit: { entity: 'brand' },
     searchFields: ['name', 'slug'],
     filterFields: ['showOnWebsite', 'relationship'],
     async beforeDelete(brand) {
@@ -40,6 +42,7 @@ export function createContentServices(media) {
 
   const products = createCrudService(Product, {
     label: 'Product',
+    audit: { entity: 'product', action: (changes) => (changes.some((c) => c.field.startsWith('pricing')) ? 'product.price_change' : undefined) },
     searchFields: ['name', 'slug', 'summary'],
     filterFields: ['category', 'brand', 'kind', 'featured', 'active'],
     populate: { path: 'category', select: 'name slug' },
@@ -52,6 +55,7 @@ export function createContentServices(media) {
 
   const services = createCrudService(Service, {
     label: 'Service',
+    audit: { entity: 'service' },
     searchFields: ['title', 'slug', 'summary'],
     filterFields: ['active', 'status'],
     afterDelete: (service) => media.remove(service.image, 'service deleted'),
@@ -59,6 +63,7 @@ export function createContentServices(media) {
 
   const gallery = createCrudService(GalleryItem, {
     label: 'Gallery item',
+    audit: { entity: 'gallery' },
     searchFields: ['title', 'caption', 'tag', 'location'],
     filterFields: ['type', 'active', 'tag'],
     async beforeSave(data) {
@@ -69,6 +74,7 @@ export function createContentServices(media) {
 
   const testimonials = createCrudService(Testimonial, {
     label: 'Review',
+    audit: { entity: 'review', action: (changes) => (changes.some((c) => c.field === 'status' || c.field === 'published') ? 'review.moderate' : undefined) },
     searchFields: ['name', 'company', 'message', 'serviceReceived'],
     filterFields: ['published', 'source', 'status'],
     beforeSave(data, doc, actor) {
@@ -84,6 +90,7 @@ export function createContentServices(media) {
 
   const enquiries = createCrudService(Enquiry, {
     label: 'Enquiry',
+    audit: { entity: 'enquiry' },
     searchFields: ['name', 'phone', 'email', 'message', 'interest'],
     filterFields: ['status', 'type'],
     populate: [
@@ -94,6 +101,7 @@ export function createContentServices(media) {
 
   const assets = createCrudService(SiteAsset, {
     label: 'Asset',
+    audit: { entity: 'branding' },
     searchFields: ['title'],
     filterFields: ['slot', 'active'],
     beforeDelete(asset) {

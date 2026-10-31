@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Loader2, RefreshCw, Trash2, Upload } from 'lucid
 import { useId, useState } from 'react'
 import { api, checkImage } from '../api/client'
 import { ImagePreview, UploadProgress } from './ImageField'
-import { useMediaStatus } from './MediaStatus'
+import { UploadLimit, useMediaStatus } from './MediaStatus'
 import { useToast } from './Toast'
 import { ConfirmDialog } from './ui'
 
@@ -42,13 +42,24 @@ export default function ProductImages({ product, onSaved }) {
     const problems = files.map((f) => checkImage(f, maxBytes)).filter(Boolean)
     if (problems.length) return toast.error(problems.join(' '))
     if (images.length + files.length > MAX_IMAGES) return toast.error(`A product can have at most ${MAX_IMAGES} images (it has ${images.length}).`)
+    // One photo per request: hosting limits each request to 4.5 MB, so several large photos
+    // sent together could be rejected. Progress covers the whole batch.
     setProgress(0)
+    let done = 0
     try {
-      const { data } = await api.upload('POST', base, { field: 'images', files, fields: { alt: product.name }, onProgress: setProgress })
-      onSaved(data)
+      for (const file of files) {
+        const { data } = await api.upload('POST', base, {
+          field: 'images',
+          files: [file],
+          fields: { alt: product.name },
+          onProgress: (p) => setProgress(Math.round(((done + p / 100) / files.length) * 100)),
+        })
+        done += 1
+        onSaved(data)
+      }
       toast.success(files.length === 1 ? 'Image uploaded.' : `${files.length} images uploaded.`)
     } catch (err) {
-      toast.error(err.message)
+      toast.error(done ? `${done} of ${files.length} images uploaded. ${err.message}` : err.message)
     } finally {
       setProgress(null)
     }
@@ -90,6 +101,7 @@ export default function ProductImages({ product, onSaved }) {
           </>
         )}
       </div>
+      <UploadLimit />
       {progress !== null && (
         <div className="space-y-1">
           <UploadProgress value={progress} />

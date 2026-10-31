@@ -72,7 +72,6 @@ export async function seedContent({ force = false } = {}) {
       contactPerson: business.contactPerson ?? '',
       address: { lines: business.address.lines, city: business.address.city, state: business.address.state, pincode: business.address.pincode, country: 'India' },
       mapsUrl: business.maps.view,
-      rating: business.rating,
       primaryBrand: maglon._id,
       owners: owners.map((o, i) => ({
         name: o.name,
