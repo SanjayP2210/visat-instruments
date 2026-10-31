@@ -16,7 +16,11 @@
     "media:check": "node --env-file=.env src/scripts/checkCloudinary.js",
     "media:cleanup": "node --env-file=.env src/scripts/cleanupMedia.js",
     "admin:reset-password": "node --env-file=.env src/scripts/resetAdminPassword.js",
-    "reviews:sample": "node --env-file=.env src/scripts/sampleReviews.js"
+    "reviews:sample": "node --env-file=.env src/scripts/sampleReviews.js",
+    "prod:check": "node --env-file=.env.production.local src/scripts/checkProduction.js",
+    "prod:media:check": "node --env-file=.env.production.local src/scripts/checkCloudinary.js",
+    "prod:seed:content": "node --env-file=.env.production.local src/scripts/seedContent.js",
+    "prod:seed:admin": "node --env-file=.env.production.local src/scripts/createAdmin.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
